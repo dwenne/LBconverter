@@ -1,0 +1,32 @@
+name: Update index redirect
+
+on:
+  push:
+    paths:
+      - 'lorebook-converter-v*.html'
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find latest version and update index.html
+        run: |
+          LATEST=$(ls lorebook-converter-v*.html 2>/dev/null | sort -V | tail -1)
+          if [ -z "$LATEST" ]; then echo "No file found"; exit 1; fi
+          echo "Redirecting to: $LATEST"
+          cat > index.html <<EOF
+          <!DOCTYPE html>
+          <html><head><meta charset="UTF-8">
+          <meta http-equiv="refresh" content="0; url=$LATEST">
+          <title>Redirecting...</title></head>
+          <body><script>window.location.replace("$LATEST");<\/script></body>
+          </html>
+          EOF
+      - name: Commit updated index.html
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "chore: redirect to $LATEST"
+          git push
