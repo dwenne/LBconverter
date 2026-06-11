@@ -1,0 +1,2799 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lorebook Converter v6</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0d0c0a;
+        --bg2: #131210;
+        --bg3: #1a1815;
+        --border: #2e2a23;
+        --border2: #3d3830;
+        --gold: #c9a84c;
+        --gold2: #e8c96a;
+        --gold-dim: #7a6530;
+        --amber: #d4813a;
+        --red: #c0513a;
+        --green: #5a9e6f;
+        --blue: #5a7a9e;
+        --purple: #7a5a9e;
+        --teal: #3a9e8a;
+        --text: #d4cfc4;
+        --text-dim: #8a8070;
+        --text-muted: #55504a;
+        --drop-hover: #1a1810;
+        --glow: #c9a84c44;
+        --warn-bg: #1a100844;
+        --kw-bg: #2a2520;
+        --tb-scen-bg: #0e1a0e;
+        --tb-scen-border: #2a4a2a;
+        --tb-pers-bg: #1a0e1a;
+        --tb-pers-border: #3a1a4a;
+        --tb-jai-bg: #1a150a;
+        --tb-jai-border: #3a3010;
+        --tb-merge-bg: #0e151a;
+        --tb-merge-border: #1a3040;
+      }
+      :root.light {
+        --bg: #f5f2ec;
+        --bg2: #ede9e0;
+        --bg3: #e4dfd4;
+        --border: #ccc5b5;
+        --border2: #b8b0a0;
+        --gold: #8a6820;
+        --gold2: #6b5010;
+        --gold-dim: #9a7830;
+        --amber: #b05010;
+        --red: #a03020;
+        --green: #2a6e40;
+        --blue: #2a5a8e;
+        --purple: #5a3a8e;
+        --teal: #2a7a68;
+        --text: #1a1510;
+        --text-dim: #4a4035;
+        --text-muted: #8a8070;
+        --drop-hover: #dfd8c8;
+        --glow: #8a682044;
+        --warn-bg: #b050101a;
+        --kw-bg: #dcd4c4;
+        --tb-scen-bg: #dce5dc;
+        --tb-scen-border: #9cb59c;
+        --tb-pers-bg: #e5dce5;
+        --tb-pers-border: #b59cb5;
+        --tb-jai-bg: #e5dfd0;
+        --tb-jai-border: #b5ac8c;
+        --tb-merge-bg: #dcecf5;
+        --tb-merge-border: #9cbab5;
+      }
+      :root.no-transition * {
+        transition: none !important;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Crimson Pro", Georgia, serif;
+        font-size: 17px;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+      :root.light body::before {
+        background-image:
+          radial-gradient(
+            ellipse 80% 60% at 50% -10%,
+            #e8d8a022 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 40% 30% at 80% 80%,
+            #d4c09022 0%,
+            transparent 50%
+          );
+      }
+      .theme-toggle {
+        position: fixed;
+        top: 16px;
+        right: 20px;
+        z-index: 100;
+        background: var(--bg3);
+        border: 1px solid var(--border2);
+        border-radius: 20px;
+        padding: 5px 12px;
+        cursor: pointer;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        transition:
+          color 0.2s,
+          border-color 0.2s,
+          background 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .theme-toggle:hover {
+        border-color: var(--gold-dim);
+        color: var(--text);
+      }
+      .page {
+        position: relative;
+        z-index: 1;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 48px 24px 80px;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 44px;
+      }
+      .rune-line {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: var(--gold-dim);
+        font-size: 11px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+      }
+      .rune-line::before,
+      .rune-line::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(
+          to right,
+          transparent,
+          var(--gold-dim),
+          transparent
+        );
+      }
+      h1 {
+        font-family: "Cinzel", serif;
+        font-size: clamp(1.6rem, 5vw, 2.8rem);
+        font-weight: 700;
+        color: var(--gold2);
+        letter-spacing: 0.04em;
+        line-height: 1.15;
+        text-shadow: 0 0 40px var(--glow);
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        color: var(--text-dim);
+        font-style: italic;
+        font-size: 1rem;
+      }
+      .v-badge {
+        display: inline-block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.65rem;
+        color: var(--gold-dim);
+        border: 1px solid var(--gold-dim);
+        border-radius: 2px;
+        padding: 1px 6px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+      .section-label {
+        font-family: "Cinzel", serif;
+        font-size: 0.73rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--gold-dim);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .section-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+      .fpills {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+      .fpill {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.67rem;
+        padding: 3px 9px;
+        border-radius: 10px;
+        border: 1px solid;
+        opacity: 0.35;
+        transition: opacity 0.2s;
+      }
+      .fpill.st {
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      .fpill.jai {
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .fpill.js {
+        border-color: var(--purple);
+        color: var(--purple);
+      }
+      .fpill.chain {
+        border-color: var(--teal);
+        color: var(--teal);
+      }
+      .fpill.active {
+        opacity: 1;
+      }
+      .drop-zone {
+        border: 1px dashed var(--border2);
+        border-radius: 4px;
+        padding: 22px 28px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        background: var(--bg2);
+        margin-bottom: 10px;
+      }
+      .drop-zone:hover,
+      .drop-zone.drag-over {
+        border-color: var(--gold-dim);
+        background: var(--drop-hover);
+      }
+      .drop-zone.drag-over {
+        border-style: solid;
+      }
+      .drop-icon {
+        font-size: 1.4rem;
+        margin-bottom: 6px;
+        opacity: 0.45;
+        display: block;
+      }
+      .drop-label {
+        font-family: "Cinzel", serif;
+        font-size: 0.76rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin-bottom: 3px;
+      }
+      .drop-sub {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-style: italic;
+      }
+      #fileInput {
+        display: none;
+      }
+      textarea {
+        width: 100%;
+        min-height: 150px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.73rem;
+        padding: 13px;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.2s;
+        line-height: 1.6;
+      }
+      textarea:focus {
+        border-color: var(--gold-dim);
+      }
+      textarea::placeholder {
+        color: var(--text-muted);
+        font-style: italic;
+      }
+      textarea[readonly] {
+        color: var(--green);
+        background: var(--bg3);
+        border-color: var(--border2);
+      }
+      .name-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .name-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .name-label {
+        font-family: "Cinzel", serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--gold-dim);
+      }
+      .name-input {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+        padding: 8px 11px;
+        outline: none;
+        transition: border-color 0.2s;
+        width: 100%;
+      }
+      .name-input:focus {
+        border-color: var(--gold-dim);
+      }
+      .name-input::placeholder {
+        color: var(--text-muted);
+        font-style: italic;
+      }
+      .btn-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 16px;
+      }
+      .btn {
+        font-family: "Cinzel", serif;
+        font-size: 0.76rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 10px 22px;
+        border: 1px solid;
+        border-radius: 3px;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s,
+          box-shadow 0.15s;
+        background: transparent;
+      }
+      .btn-primary {
+        border-color: var(--gold);
+        color: var(--gold2);
+      }
+      .btn-primary:hover {
+        background: var(--gold);
+        color: var(--bg);
+        box-shadow: 0 0 18px var(--glow);
+      }
+      .btn-secondary {
+        border-color: var(--border2);
+        color: var(--text-dim);
+      }
+      .btn-secondary:hover {
+        border-color: var(--text-dim);
+        color: var(--text);
+      }
+      #detectionBadge {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        margin-top: 13px;
+        padding: 10px 13px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        background: var(--bg3);
+        font-size: 0.86rem;
+      }
+      #detectionBadge.visible {
+        display: flex;
+      }
+      .badge-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .dot-ok {
+        background: var(--green);
+        box-shadow: 0 0 6px var(--green);
+      }
+      .dot-warn {
+        background: var(--amber);
+        box-shadow: 0 0 6px var(--amber);
+      }
+      .dot-error {
+        background: var(--red);
+        box-shadow: 0 0 6px var(--red);
+      }
+      #detectionText {
+        color: var(--text);
+        flex: 1;
+        line-height: 1.5;
+      }
+      #detectionText strong {
+        color: var(--gold2);
+        font-family: "Cinzel", serif;
+        font-size: 0.77rem;
+        letter-spacing: 0.04em;
+      }
+      #catPanel {
+        display: none;
+        margin-top: 16px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        background: var(--bg3);
+        overflow: hidden;
+      }
+      #catPanel.visible {
+        display: block;
+      }
+      .cphead {
+        padding: 10px 15px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .cptitle {
+        font-family: "Cinzel", serif;
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--gold-dim);
+      }
+      .cpnote {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        font-style: italic;
+      }
+      .cat-grid {
+        padding: 10px 15px;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr;
+        gap: 8px;
+        align-items: center;
+      }
+      .cg-head {
+        font-family: "Cinzel", serif;
+        font-size: 0.63rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        padding-bottom: 3px;
+        border-bottom: 1px solid var(--border);
+        transition: opacity 0.2s;
+      }
+      .cat-name {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+      }
+      .cat-sel {
+        background: var(--bg2);
+        border: 1px solid var(--border2);
+        border-radius: 2px;
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.71rem;
+        padding: 3px 6px;
+        cursor: pointer;
+        outline: none;
+        width: 100%;
+        transition: opacity 0.2s;
+      }
+      .cat-sel:focus {
+        border-color: var(--gold-dim);
+      }
+      .cat-sel:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+      .cat-sel option {
+        background: var(--bg2);
+      }
+      .pos-cell {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .pos-cell .cat-sel {
+        flex: 1;
+        min-width: 0;
+      }
+      .depth-inp {
+        width: 42px;
+        font-size: 0.7rem;
+        padding: 3px 5px;
+        border: 1px solid var(--border2);
+        border-radius: 2px;
+        background: var(--bg2);
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+        outline: none;
+        display: none;
+        flex-shrink: 0;
+        -moz-appearance: textfield;
+      }
+      .depth-inp::-webkit-inner-spin-button,
+      .depth-inp::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+      }
+      .depth-inp.show {
+        display: block;
+      }
+      .depth-inp:focus {
+        border-color: var(--teal);
+      }
+      .opts-box {
+        padding: 12px 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        border-top: 1px solid var(--border);
+        background: var(--bg2);
+      }
+      .check-lbl {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: var(--text);
+        user-select: none;
+      }
+      .check-lbl input {
+        accent-color: var(--gold-dim);
+        width: 14px;
+        height: 14px;
+      }
+      #warningsBox {
+        display: none;
+        margin-top: 13px;
+        padding: 11px 13px;
+        border: 1px solid #7a3a2044;
+        border-left: 3px solid var(--amber);
+        border-radius: 3px;
+        background: var(--warn-bg);
+        font-size: 0.84rem;
+        color: var(--text-dim);
+        line-height: 1.7;
+      }
+      #warningsBox.visible {
+        display: block;
+      }
+      #warningsBox ul {
+        padding-left: 15px;
+        margin-top: 4px;
+      }
+      #warningsBox li {
+        margin-bottom: 2px;
+      }
+      #warningsBox strong {
+        color: var(--amber);
+      }
+      #warningsBox code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+        color: var(--gold-dim);
+      }
+      .divider {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 30px 0;
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        font-family: "Cinzel", serif;
+      }
+      .divider::before,
+      .divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      /* Results */
+      #resultsSection {
+        display: none;
+      }
+      #resultsSection.visible {
+        display: block;
+      }
+      .result-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .result-stat {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.74rem;
+        color: var(--text-dim);
+      }
+      .result-stat span {
+        color: var(--gold2);
+      }
+
+      /* ── Preview Note & Export Section ── */
+      #previewNote {
+        display: none;
+        color: var(--amber);
+        font-size: 0.82rem;
+        font-style: italic;
+        margin-bottom: 12px;
+        border-left: 2px solid var(--amber);
+        padding-left: 10px;
+        background: var(--warn-bg);
+        padding-block: 8px;
+        border-radius: 0 3px 3px 0;
+      }
+      #previewNote.visible {
+        display: block;
+      }
+      #exportSection {
+        display: none;
+      }
+      #exportSection.visible {
+        display: block;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 20px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+        min-width: 540px;
+      }
+      thead tr {
+        background: var(--bg3);
+        border-bottom: 1px solid var(--border2);
+      }
+      th {
+        text-align: left;
+        padding: 8px 10px;
+        font-family: "Cinzel", serif;
+        font-size: 0.64rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--gold-dim);
+        font-weight: 400;
+        white-space: nowrap;
+      }
+      tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.1s;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      /* Row click effects */
+      .click-row {
+        cursor: pointer;
+      }
+      .click-row:hover {
+        background: var(--bg3);
+      }
+      .click-row:active {
+        background: var(--bg2);
+      }
+      td {
+        padding: 6px 10px;
+        vertical-align: top;
+        color: var(--text);
+      }
+      td.mono {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.69rem;
+        color: var(--text-dim);
+      }
+      .tl {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+      }
+      .tag {
+        border-radius: 2px;
+        padding: 1px 5px;
+        font-size: 0.67rem;
+        font-family: "JetBrains Mono", monospace;
+        white-space: nowrap;
+        border: 1px solid;
+      }
+      .tag.kw {
+        color: var(--gold-dim);
+        border-color: var(--border2);
+        background: var(--kw-bg);
+      }
+      .tag.sec {
+        color: var(--text-muted);
+        border-color: var(--border);
+        background: transparent;
+      }
+      .type-badge {
+        display: inline-block;
+        padding: 1px 7px;
+        border-radius: 2px;
+        font-size: 0.67rem;
+        font-family: "Cinzel", serif;
+        letter-spacing: 0.04em;
+      }
+      .tb-scen {
+        background: var(--tb-scen-bg);
+        color: var(--green);
+        border: 1px solid var(--tb-scen-border);
+      }
+      .tb-pers {
+        background: var(--tb-pers-bg);
+        color: var(--purple);
+        border: 1px solid var(--tb-pers-border);
+      }
+      .tb-jai {
+        background: var(--tb-jai-bg);
+        color: var(--gold-dim);
+        border: 1px solid var(--tb-jai-border);
+      }
+      .tb-merged {
+        background: var(--tb-merge-bg);
+        color: var(--teal);
+        border: 1px solid var(--tb-merge-border);
+      }
+      .pos-badge {
+        display: inline-block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.64rem;
+        padding: 1px 5px;
+        border-radius: 2px;
+        border: 1px solid;
+      }
+      .p0 {
+        color: #7a9eb5;
+        border-color: #2a4a5a;
+      }
+      .p1 {
+        color: #7ab57a;
+        border-color: #2a5a2a;
+      }
+      .p2 {
+        color: #9eb57a;
+        border-color: #4a5a2a;
+      }
+      .p3 {
+        color: #b5a07a;
+        border-color: #5a4a2a;
+      }
+      .p4 {
+        color: #b57a7a;
+        border-color: #5a2a2a;
+      }
+      .p5 {
+        color: #b57aa0;
+        border-color: #5a2a4a;
+      }
+      .p6 {
+        color: var(--teal);
+        border-color: #2a5a5a;
+      }
+      .p7 {
+        color: #9e7ab5;
+        border-color: #4a2a7a;
+      }
+      .px {
+        color: var(--text-muted);
+        border-color: var(--border);
+      }
+      .truncate {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .tap-hint {
+        display: block;
+        font-size: 0.6rem;
+        color: var(--gold-dim);
+        font-family: "Crimson Pro", serif;
+        margin-top: 3px;
+        opacity: 0.6;
+      }
+      .out-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 7px;
+      }
+      .copy-btn {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.69rem;
+        padding: 3px 10px;
+        border: 1px solid var(--border2);
+        border-radius: 2px;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition:
+          color 0.15s,
+          border-color 0.15s;
+      }
+      .copy-btn:hover {
+        color: var(--gold2);
+        border-color: var(--gold-dim);
+      }
+      .fm {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 5px 4px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        padding: 12px;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        margin-top: 10px;
+      }
+      .fm-l {
+        color: var(--text-dim);
+        text-align: right;
+      }
+      .fm-a {
+        color: var(--gold-dim);
+        text-align: center;
+      }
+      .fm-r {
+        color: var(--text-dim);
+      }
+      .fm-n {
+        grid-column: 1/-1;
+        color: var(--text-muted);
+        font-size: 0.69rem;
+        margin-top: 1px;
+        font-family: "Crimson Pro", serif;
+      }
+      .fm-h {
+        grid-column: 1/-1;
+        color: var(--gold-dim);
+        font-family: "Cinzel", serif;
+        font-size: 0.65rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 3px;
+        margin-bottom: 2px;
+        margin-top: 4px;
+      }
+      details summary {
+        cursor: pointer;
+        color: var(--text-dim);
+        font-size: 0.82rem;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      details summary::before {
+        content: "▸";
+        color: var(--gold-dim);
+        font-size: 0.66rem;
+        transition: transform 0.2s;
+      }
+      details[open] summary::before {
+        transform: rotate(90deg);
+      }
+      details summary::-webkit-details-marker {
+        display: none;
+      }
+      footer {
+        margin-top: 52px;
+        text-align: center;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        font-style: italic;
+      }
+      footer a {
+        color: var(--gold-dim);
+        text-decoration: none;
+      }
+      footer a:hover {
+        color: var(--gold2);
+      }
+
+      /* ── Modal ── */
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: #000000bb;
+        z-index: 999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        backdrop-filter: blur(2px);
+      }
+      .modal.visible {
+        display: flex;
+        opacity: 1;
+      }
+      .modal-box {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 10px 40px #000a;
+        transform: translateY(10px);
+        transition: transform 0.2s;
+      }
+      .modal.visible .modal-box {
+        transform: none;
+      }
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg3);
+      }
+      .modal-head span {
+        font-family: "Cinzel", serif;
+        color: var(--gold2);
+        font-weight: 700;
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+      }
+      .modal-close {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.8rem;
+        cursor: pointer;
+        line-height: 1;
+        transition: color 0.15s;
+      }
+      .modal-close:hover {
+        color: var(--red);
+      }
+      .modal-body {
+        padding: 18px;
+        overflow-y: auto;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.78rem;
+        color: var(--text);
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+
+      /* ── Mobile ── */
+      @media (max-width: 640px) {
+        .page {
+          padding: 52px 14px 60px;
+        }
+        .theme-toggle {
+          top: 8px;
+          right: 10px;
+          padding: 4px 9px;
+          font-size: 0.62rem;
+        }
+        h1 {
+          font-size: 1.4rem;
+        }
+        .subtitle {
+          font-size: 0.88rem;
+        }
+        .rune-line {
+          display: none;
+        }
+        header {
+          margin-bottom: 28px;
+        }
+        .name-row {
+          grid-template-columns: 1fr;
+        }
+        .cat-grid {
+          grid-template-columns: 1.2fr 1fr 1fr;
+          padding: 8px 10px;
+          gap: 6px;
+        }
+        .drop-zone {
+          padding: 16px 14px 12px;
+        }
+        .btn {
+          padding: 9px 14px;
+          font-size: 0.72rem;
+        }
+        .btn-row {
+          gap: 8px;
+        }
+        .fm {
+          font-size: 0.64rem;
+          padding: 10px;
+        }
+        .result-meta {
+          gap: 10px;
+        }
+        .fpills {
+          gap: 5px;
+        }
+        .fpill {
+          font-size: 0.62rem;
+          padding: 2px 7px;
+        }
+        textarea {
+          font-size: 0.7rem;
+        }
+        .modal {
+          padding: 10px;
+        }
+        .modal-body {
+          font-size: 0.72rem;
+          padding: 14px;
+        }
+      }
+      @media (max-width: 400px) {
+        .cat-grid {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+        .cg-head {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+    <div class="page">
+      <header>
+        <div class="rune-line">Tome Alchemy</div>
+        <h1>Lorebook Converter <span class="v-badge">v6</span></h1>
+        <p class="subtitle">
+          SillyTavern World Info &nbsp;⇄&nbsp; JanitorAI Lorebook &amp; Scripts
+        </p>
+      </header>
+
+      <div class="section-label">Import</div>
+      <div class="fpills">
+        <span class="fpill st" id="pill-st">ST World Info JSON</span>
+        <span class="fpill jai" id="pill-jai">JAI Lorebook JSON</span>
+        <span class="fpill js" id="pill-js">loreEntries Script</span>
+        <span class="fpill chain" id="pill-chain">if-chain Script</span>
+      </div>
+
+      <div class="drop-zone" id="dropZone" role="button" tabindex="0">
+        <span class="drop-icon">📖</span>
+        <div class="drop-label">Drop any lorebook file here</div>
+        <div class="drop-sub">
+          ST JSON · JAI JSON · scripts (.txt .js .json .docx)
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept=".json,.js,.txt,.docx" />
+
+      <textarea
+        id="pasteInput"
+        placeholder='Paste any format here:
+  ST World Info      →  {"entries":{"0":{…}}}
+  JAI JSON           →  [{…},{…}]
+  loreEntries script →  const loreEntries = [{…}]
+  if-chain script    →  if (lastMessage.includes(&apos;kw&apos;)) { context.character… }'
+      ></textarea>
+
+      <div class="name-row">
+        <div class="name-group">
+          <label class="name-label" for="lbName">Lorebook name</label>
+          <input
+            class="name-input"
+            id="lbName"
+            type="text"
+            placeholder="e.g. My Lorebook (used as filename)"
+          />
+        </div>
+        <div class="name-group">
+          <label class="name-label" for="outletName"
+            >Outlet name
+            <span
+              style="
+                color: var(--text-muted);
+                font-family: &quot;Crimson Pro&quot;, serif;
+                font-size: 0.78rem;
+                text-transform: none;
+                letter-spacing: 0;
+                font-weight: 400;
+              "
+              >(for personality entries)</span
+            ></label
+          >
+          <input
+            class="name-input"
+            id="outletName"
+            type="text"
+            placeholder="e.g. char_knowledge"
+          />
+        </div>
+      </div>
+
+      <div id="detectionBadge">
+        <div class="badge-dot" id="badgeDot"></div>
+        <div id="detectionText"></div>
+      </div>
+
+      <div id="catPanel">
+        <div class="cphead">
+          <span class="cptitle">Entry positions by category</span>
+          <span class="cpnote">Personality defaults to 7 / Outlet</span>
+        </div>
+        <div class="cat-grid" id="catGrid">
+          <div class="cg-head">Category</div>
+          <div class="cg-head">Scenario Pos</div>
+          <div class="cg-head" id="persPosHead">Personality Pos</div>
+        </div>
+        <div
+          class="cphead"
+          style="border-top: 1px solid var(--border); margin-top: 6px"
+        >
+          <span class="cptitle">Advanced Script Settings</span>
+        </div>
+        <div class="opts-box">
+          <label class="check-lbl">
+            <input type="checkbox" id="mergePairsCheck" />
+            Merge Scenario & Personality into a single entry (uses Scenario
+            position)
+          </label>
+          <div class="name-row" style="margin-top: 0">
+            <div class="name-group">
+              <label class="name-label" style="font-size: 0.6rem"
+                >Scenario text prefix
+                <span style="text-transform: none; color: var(--text-muted)"
+                  >(use \n for newline)</span
+                ></label
+              >
+              <input
+                class="name-input"
+                id="scenPrefix"
+                type="text"
+                placeholder="e.g. [Scenario]\n"
+              />
+            </div>
+            <div class="name-group">
+              <label class="name-label" style="font-size: 0.6rem"
+                >Personality text prefix</label
+              >
+              <input
+                class="name-input"
+                id="persPrefix"
+                type="text"
+                placeholder="e.g. [Personality]\n"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="convertBtn">Convert ⟶</button>
+        <button class="btn btn-secondary" id="clearBtn">Clear</button>
+      </div>
+
+      <div id="warningsBox"></div>
+
+      <details style="margin-top: 20px">
+        <summary>Field mapping reference</summary>
+        <div class="fm">
+          <div class="fm-h">Scripts → ST</div>
+          <div class="fm-l">entry</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r">up to 2 ST entries (or 1 merged)</div>
+          <div class="fm-l">scenario text</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r">content, mapped position (default 0 or 1)</div>
+          <div class="fm-l">personality text</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r">content, position 7 / Outlet (default)</div>
+          <div class="fm-l">keywords / includes()</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r">key (shared)</div>
+          <div class="fm-l">priority × 10</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r">order</div>
+          <div class="fm-l">minMessages / message_count</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r">delay</div>
+          <div class="fm-l">filters.notWith</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r">keysecondary + NOT ANY (2)</div>
+          <div class="fm-l">filters.requiresAny</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r">keysecondary + AND ANY (0)</div>
+          <div class="fm-l">filters.requiresAll</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r">keysecondary + AND ALL (1)</div>
+          <div class="fm-n">
+            Positions: 0=↑Char · 1=↓Char · 2=↑Ex Msgs · 3=↓
+            Ex Msgs · 4=↑AN · 5=↓AN · 6=@ Depth (System/User/Asst + depth
+            number) · 7=Outlet (needs {{outlet::name}} in card)
+          </div>
+          <div class="fm-h">ST ↔ JAI JSON (universal)</div>
+          <div class="fm-l">key / disable / delay</div>
+          <div class="fm-a">⇄</div>
+          <div class="fm-r">keyword(s) / enabled / minMessages</div>
+          <div class="fm-n">
+            Positions: 0 = Before Char Defs · 1 = After Char Defs · 7 = Outlet
+          </div>
+        </div>
+      </details>
+
+      <div class="divider">Results</div>
+
+      <div id="resultsSection">
+        <div class="result-meta">
+          <div class="result-stat">
+            Source entries: <span id="rCount">—</span>
+          </div>
+          <div class="result-stat">ST entries out: <span id="rST">—</span></div>
+          <div class="result-stat">Format: <span id="rSrc">—</span></div>
+          <div class="result-stat">→ <span id="rTgt">—</span></div>
+        </div>
+
+        <div id="previewNote">
+          * Table is showing a live preview. Adjust categories or settings above
+          and click <strong>Convert ⟶</strong> to generate your JSON.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Type</th>
+                <th>
+                  Name
+                </th>
+                <th>Keywords</th>
+                <th>Secondary</th>
+                <th>Pos</th>
+                <th>Order</th>
+                <th>Delay</th>
+              </tr>
+            </thead>
+            <tbody id="tBody"></tbody>
+          </table>
+        </div>
+
+        <div id="exportSection">
+          <div class="out-head">
+            <div class="section-label" style="margin: 0; flex: 1">
+              Output JSON
+            </div>
+            <button class="copy-btn" id="copyBtn">copy</button>
+          </div>
+          <textarea id="outputJson" readonly spellcheck="false"></textarea>
+          <div class="btn-row" style="margin-top: 12px">
+            <button class="btn btn-primary" id="downloadBtn">
+              Download JSON
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>All processing is local — nothing leaves your browser.</p>
+        <p style="margin-top: 5px">
+          <a
+            href="https://docs.sillytavern.app/usage/core-concepts/worldinfo/"
+            target="_blank"
+            >ST Docs</a
+          >
+          &nbsp;·&nbsp;
+          <a
+            href="https://help.janitorai.com/en/category/scripts-1qzakwc/"
+            target="_blank"
+            >JAI Scripts</a
+          >
+        </p>
+      </footer>
+    </div>
+
+    <!-- Modal -->
+    <div id="previewModal" class="modal">
+      <div class="modal-box">
+        <div class="modal-head">
+          <span id="pmTitle">Entry Preview</span>
+          <button class="modal-close" id="pmClose" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body" id="pmBody"></div>
+      </div>
+    </div>
+
+    <script>
+      const POSITIONS = {
+        0: "0 · Before Char Defs",
+        1: "1 · After Char Defs",
+        2: "2 · Before Example Msgs",
+        3: "3 · After Example Msgs",
+        4: "4 · Top of AN",
+        5: "5 · Bottom of AN",
+        "6:0": "6 · @ Depth — System",
+        "6:1": "6 · @ Depth — User",
+        "6:2": "6 · @ Depth — Assistant",
+        7: "7 · Outlet",
+      };
+
+      // ═══════════════════════════════════════════════
+      // FORMAT DETECTION
+      // ═══════════════════════════════════════════════
+      function detectFormat(text) {
+        const t = text.trim();
+        if (t.startsWith("{") || t.startsWith("[")) {
+          try {
+            const p = JSON.parse(t);
+            // More robust JAI checking (looks for keyword, keywords, keys, or content)
+            if (
+              Array.isArray(p) &&
+              p.length &&
+              ("keys" in p[0] ||
+                "keyword" in p[0] ||
+                "keywords" in p[0] ||
+                "content" in p[0])
+            )
+              return { type: "jai_json", parsed: p };
+            if (
+              p &&
+              p.entries &&
+              typeof p.entries === "object" &&
+              !Array.isArray(p.entries)
+            )
+              return { type: "st_json", parsed: p };
+            const ks = Object.keys(p);
+            if (ks.length && ks.every((k) => !isNaN(parseInt(k))))
+              return { type: "st_json", parsed: { entries: p } };
+          } catch (e) {}
+        }
+        if (/loreEntries\s*=\s*\[/.test(t))
+          return { type: "jai_script", parsed: null };
+        if (
+          /lastMessage\.includes\s*\(/.test(t) &&
+          /context\.character\.(personality|scenario)\s*\+=/.test(t)
+        )
+          return { type: "if_chain", parsed: null };
+        return null;
+      }
+
+      // ═══════════════════════════════════════════════
+      // .DOCX ZERO-DEPENDENCY EXTRACTOR
+      // ═══════════════════════════════════════════════
+      async function extractDocxText(arrayBuffer) {
+        const view = new DataView(arrayBuffer);
+        const bytes = new Uint8Array(arrayBuffer);
+
+        let eocdOffset = -1;
+        for (let i = bytes.length - 22; i >= 0; i--) {
+          if (view.getUint32(i, true) === 0x06054b50) {
+            eocdOffset = i;
+            break;
+          }
+        }
+        if (eocdOffset === -1) throw new Error("Not a valid ZIP/DOCX file");
+
+        const cdOffset = view.getUint32(eocdOffset + 16, true);
+        const cdEntries = view.getUint16(eocdOffset + 10, true);
+
+        let offset = cdOffset,
+          targetOffset = -1,
+          targetCompMethod = -1,
+          targetCompSize = -1;
+
+        for (let i = 0; i < cdEntries; i++) {
+          if (view.getUint32(offset, true) !== 0x02014b50) break;
+          const compMethod = view.getUint16(offset + 10, true);
+          const compSize = view.getUint32(offset + 20, true);
+          const nameLen = view.getUint16(offset + 28, true);
+          const extraLen = view.getUint16(offset + 30, true);
+          const commentLen = view.getUint16(offset + 32, true);
+          const localHeaderOffset = view.getUint32(offset + 42, true);
+
+          const nameBytes = bytes.subarray(offset + 46, offset + 46 + nameLen);
+          const name = new TextDecoder().decode(nameBytes);
+
+          if (name === "word/document.xml") {
+            targetOffset = localHeaderOffset;
+            targetCompMethod = compMethod;
+            targetCompSize = compSize;
+            break;
+          }
+          offset += 46 + nameLen + extraLen + commentLen;
+        }
+
+        if (targetOffset === -1)
+          throw new Error("word/document.xml not found in DOCX");
+
+        if (view.getUint32(targetOffset, true) !== 0x04034b50)
+          throw new Error("Invalid local file header");
+        const lfNameLen = view.getUint16(targetOffset + 26, true);
+        const lfExtraLen = view.getUint16(targetOffset + 28, true);
+        const dataOffset = targetOffset + 30 + lfNameLen + lfExtraLen;
+
+        const compressedData = bytes.subarray(
+          dataOffset,
+          dataOffset + targetCompSize,
+        );
+
+        let xmlString = "";
+        if (targetCompMethod === 0) {
+          xmlString = new TextDecoder().decode(compressedData);
+        } else if (targetCompMethod === 8) {
+          if (typeof DecompressionStream === "undefined")
+            throw new Error(
+              "Browser doesn't support local DOCX extraction. Try copy-pasting instead.",
+            );
+          const ds = new DecompressionStream("deflate-raw");
+          const writer = ds.writable.getWriter();
+          writer.write(compressedData);
+          writer.close();
+          const reader = ds.readable.getReader();
+          const chunks = [];
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+          }
+          const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
+          const decompressed = new Uint8Array(totalLen);
+          let ptr = 0;
+          for (const c of chunks) {
+            decompressed.set(c, ptr);
+            ptr += c.length;
+          }
+          xmlString = new TextDecoder().decode(decompressed);
+        } else {
+          throw new Error("Unsupported DOCX compression method");
+        }
+
+        let paragraphs = xmlString.split("</w:p>");
+        let text = paragraphs
+          .map((p) => {
+            let tMatch = p.match(/<w:t[^>]*>([^<]*)<\/w:t>/g);
+            if (!tMatch) return "";
+            let line = tMatch
+              .map((t) => t.replace(/<w:t[^>]*>/, "").replace(/<\/w:t>/, ""))
+              .join("");
+            return line
+              .replace(/&amp;/g, "&")
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
+              .replace(/&quot;/g, '"')
+              .replace(/&apos;/g, "'");
+          })
+          .filter((p) => p.trim() !== "")
+          .join("\n\n");
+
+        text = text
+          .replace(/[\u2018\u2019]/g, "'")
+          .replace(/[\u201C\u201D]/g, '"');
+        return text;
+      }
+
+      // ═══════════════════════════════════════════════
+      // QUOTE SANITISER
+      // ═══════════════════════════════════════════════
+      function sanitizeQuotes(code) {
+        let out = "",
+          i = 0;
+        while (i < code.length) {
+          if (code[i] === "/" && code[i + 1] === "/") {
+            const end = code.indexOf("\n", i);
+            const e = end === -1 ? code.length : end + 1;
+            out += code.slice(i, e);
+            i = e;
+            continue;
+          }
+          if (code[i] === "/" && code[i + 1] === "*") {
+            const end = code.indexOf("*/", i + 2);
+            const e = end === -1 ? code.length : end + 2;
+            out += code.slice(i, e);
+            i = e;
+            continue;
+          }
+          if (code[i] === "`") {
+            let j = i + 1;
+            while (j < code.length) {
+              if (code[j] === "\\") {
+                j += 2;
+                continue;
+              }
+              if (code[j] === "`") {
+                j++;
+                break;
+              }
+              j++;
+            }
+            out += code.slice(i, j);
+            i = j;
+            continue;
+          }
+          if (code[i] === '"') {
+            let j = i + 1;
+            while (j < code.length) {
+              if (code[j] === "\\") {
+                j += 2;
+                continue;
+              }
+              if (code[j] === '"') {
+                j++;
+                break;
+              }
+              j++;
+            }
+            out += code.slice(i, j);
+            i = j;
+            continue;
+          }
+          if (code[i] === "'") {
+            let j = i + 1,
+              inner = "";
+            while (j < code.length) {
+              if (code[j] === "\\" && j + 1 < code.length) {
+                const nx = code[j + 1];
+                if (nx === "'") inner += "'";
+                else if (nx === '"') inner += '\\"';
+                else inner += code[j] + nx;
+                j += 2;
+                continue;
+              }
+              if (code[j] === "'") {
+                j++;
+                break;
+              }
+              if (code[j] === '"') inner += '\\"';
+              else inner += code[j];
+              j++;
+            }
+            out += '"' + inner + '"';
+            i = j;
+            continue;
+          }
+          out += code[i];
+          i++;
+        }
+        return out;
+      }
+
+      // ═══════════════════════════════════════════════
+      // loreEntries SCRIPT PARSER
+      // ═══════════════════════════════════════════════
+      function parseScript(code) {
+        const startIdx = code.indexOf("loreEntries");
+        if (startIdx === -1) throw new Error("loreEntries not found");
+        const arrStart = code.indexOf("[", code.indexOf("=", startIdx));
+        if (arrStart === -1) throw new Error("Array not found");
+        let depth = 0,
+          i = arrStart,
+          end = -1;
+        while (i < code.length) {
+          if (code[i] === "[") depth++;
+          else if (code[i] === "]") {
+            depth--;
+            if (depth === 0) {
+              end = i;
+              break;
+            }
+          }
+          i++;
+        }
+        if (end === -1) throw new Error("Unclosed bracket");
+        const arrStr = code.slice(arrStart, end + 1);
+        try {
+          const r = new Function('"use strict";return(' + arrStr + ")")();
+          if (Array.isArray(r)) return r;
+        } catch (_) {}
+        try {
+          const r = new Function(
+            '"use strict";return(' + sanitizeQuotes(arrStr) + ")",
+          )();
+          if (Array.isArray(r)) return r;
+          throw new Error("Result is not an array");
+        } catch (e) {
+          throw new Error("Parse failed: " + e.message);
+        }
+      }
+
+      // ═══════════════════════════════════════════════
+      // IF-CHAIN SCRIPT PARSER
+      // ═══════════════════════════════════════════════
+      function parseIfChain(code) {
+        const entries = [];
+        function getBlock(src, braceIdx) {
+          let depth = 0,
+            i = braceIdx;
+          while (i < src.length) {
+            const c = src[i];
+            if (c === '"' || c === "'" || c === "`") {
+              const q = c;
+              i++;
+              while (i < src.length) {
+                if (src[i] === "\\") {
+                  i += 2;
+                  continue;
+                }
+                if (src[i] === q) {
+                  i++;
+                  break;
+                }
+                i++;
+              }
+              continue;
+            }
+            if (c === "{") depth++;
+            else if (c === "}") {
+              depth--;
+              if (depth === 0)
+                return { body: src.slice(braceIdx + 1, i), end: i };
+            }
+            i++;
+          }
+          return null;
+        }
+        function extractStr(src, from) {
+          let i = from;
+          while (
+            i < src.length &&
+            src[i] !== "'" &&
+            src[i] !== '"' &&
+            src[i] !== "`"
+          )
+            i++;
+          if (i >= src.length) return "";
+          const q = src[i];
+          i++;
+          let val = "";
+          while (i < src.length) {
+            if (src[i] === "\\" && i + 1 < src.length) {
+              val += src[i + 1];
+              i += 2;
+              continue;
+            }
+            if (src[i] === q) break;
+            val += src[i];
+            i++;
+          }
+          return val;
+        }
+        function getKws(cond) {
+          const re = /lastMessage\.includes\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+          const kws = [];
+          let m;
+          while ((m = re.exec(cond)) !== null) kws.push(m[1]);
+          return kws;
+        }
+        function getContent(body) {
+          const pi = body.indexOf("context.character.personality +=");
+          const si = body.indexOf("context.character.scenario +=");
+          return {
+            p: pi !== -1 ? extractStr(body, pi + 32) : "",
+            s: si !== -1 ? extractStr(body, si + 29) : "",
+          };
+        }
+        function walk(src, minMsg) {
+          let i = 0;
+          while (i < src.length) {
+            if (src[i] === "/" && src[i + 1] === "/") {
+              const nl = src.indexOf("\n", i);
+              i = nl === -1 ? src.length : nl + 1;
+              continue;
+            }
+            if (src[i] === "/" && src[i + 1] === "*") {
+              const e = src.indexOf("*/", i + 2);
+              i = e === -1 ? src.length : e + 2;
+              continue;
+            }
+            const prevOk = i === 0 || /\W/.test(src[i - 1]);
+            const nextOk = /[\s(]/.test(src[i + 2] || "");
+            if (src.slice(i, i + 2) === "if" && prevOk && nextOk) {
+              let j = i + 2;
+              while (j < src.length && src[j] !== "(") j++;
+              if (j >= src.length) {
+                i++;
+                continue;
+              }
+              let depth = 0,
+                k = j;
+              while (k < src.length) {
+                if (src[k] === "(") depth++;
+                else if (src[k] === ")") {
+                  depth--;
+                  if (depth === 0) break;
+                }
+                k++;
+              }
+              const cond = src.slice(j + 1, k);
+              let bi = k + 1;
+              while (bi < src.length && src[bi] !== "{") bi++;
+              if (bi >= src.length) {
+                i++;
+                continue;
+              }
+              const block = getBlock(src, bi);
+              if (!block) {
+                i++;
+                continue;
+              }
+              const mg = cond.match(
+                /context\.chat\.message_count\s*[>>=]+\s*(\d+)/,
+              );
+              if (mg) {
+                walk(block.body, Math.max(minMsg, parseInt(mg[1]) + 1));
+                i = block.end + 1;
+                continue;
+              }
+              const kws = getKws(cond);
+              if (kws.length) {
+                const { p, s } = getContent(block.body);
+                if (p || s)
+                  entries.push({
+                    keywords: kws,
+                    personality: p,
+                    scenario: s,
+                    minMessages: minMsg,
+                    category: "If-Chain",
+                  });
+                walk(block.body, minMsg);
+                i = block.end + 1;
+                continue;
+              }
+              i = block.end + 1;
+              continue;
+            }
+            i++;
+          }
+        }
+        walk(code, 0);
+        return entries;
+      }
+
+      // ═══════════════════════════════════════════════
+      // SMART DEFAULTS
+      // ═══════════════════════════════════════════════
+      function smartScenPos(category) {
+        const c = (category || "").toLowerCase().replace(/[_-]/g, " ");
+        if (/\bnpc\b|character/.test(c)) return "1";
+        if (/location|place|dorm|building|region/.test(c)) return "1";
+        return "0";
+      }
+
+      function catLabel(category) {
+        const c = (category || "").toLowerCase().replace(/[_-]/g, " ").trim();
+        if (/^world/.test(c)) return "World";
+        if (/hierarchy/.test(c)) return "Social Hierarchy";
+        if (/^culture/.test(c)) return "Culture";
+        if (/^location/.test(c)) return "Location";
+        if (/\bnpc\b|^character/.test(c)) return "NPC";
+        if (/underground/.test(c)) return "Underground";
+        if (/faction/.test(c)) return "Faction";
+        if (/empire/.test(c)) return "Empire";
+        if (/species/.test(c)) return "Species";
+        if (/creature/.test(c)) return "Creature";
+        if (/mechanic/.test(c)) return "Mechanics";
+        if (/secret/.test(c)) return "Secret";
+        if (/cosm/.test(c)) return "Cosmology";
+        if (/if\s*chain/.test(c)) return "If-Chain";
+        return c
+          .split(" ")
+          .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
+          .join(" ");
+      }
+
+      function entryLabel(entry) {
+        const cat = (entry.category || "").toLowerCase();
+        if (/\bnpc\b|^character/.test(cat) && entry.personality) {
+          const m = entry.personality.match(
+            /knows?\s+([A-Z][a-zA-Záàâäéèêëíìîïóòôöúùûüñç]+(?:\s+[A-Z][a-zA-Záàâäéèêëíìîïóòôöúùûüñç]+)*)\s+(?:very well|:)/i,
+          );
+          if (m) {
+            const pts = m[1].trim().split(/\s+/);
+            return pts.length > 2
+              ? pts[0] + " " + pts[pts.length - 1]
+              : m[1].trim();
+          }
+        }
+        const kw =
+          entry.keywords && entry.keywords[0]
+            ? entry.keywords[0]
+            : entry.category || "Entry";
+        return kw
+          .split(/\s+/)
+          .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
+          .join(" ");
+      }
+
+      function cleanPersonality(text) {
+        if (!text) return "";
+        let t = text.trim().replace(/^,\s*/, "");
+        t = t.charAt(0).toUpperCase() + t.slice(1);
+        if (!/[.!?]$/.test(t)) t += ".";
+        return t;
+      }
+      function cleanScenario(text) {
+        return (text || "").trim();
+      }
+
+      // ═══════════════════════════════════════════════
+      // CATEGORY PANEL
+      // ═══════════════════════════════════════════════
+      function buildCatPanel(entries) {
+        const cats = [...new Set(entries.map((e) => e.category || ""))].sort();
+        const grid = document.getElementById("catGrid");
+        while (grid.children.length > 3) grid.removeChild(grid.lastChild);
+        const isMerged = document.getElementById("mergePairsCheck").checked;
+
+        cats.forEach((cat) => {
+          const defS = smartScenPos(cat),
+            defP = "7";
+          const nameEl = document.createElement("div");
+          nameEl.className = "cat-name";
+          nameEl.textContent = cat || "(none)";
+
+          function makeCell(cls, defVal, kind) {
+            const cell = document.createElement("div");
+            cell.className = "pos-cell";
+            const sel = document.createElement("select");
+            sel.className = "cat-sel " + cls;
+            sel.dataset.cat = cat;
+            if (cls.includes("pers") && isMerged) sel.disabled = true;
+            Object.entries(POSITIONS).forEach(([v, lbl]) => {
+              const o = document.createElement("option");
+              o.value = v;
+              o.textContent = lbl;
+              if (v === defVal) o.selected = true;
+              sel.appendChild(o);
+            });
+            const dep = document.createElement("input");
+            dep.type = "number";
+            dep.className = "depth-inp";
+            dep.min = 1;
+            dep.max = 99;
+            dep.value = 4;
+            dep.dataset.cat = cat;
+            dep.dataset.kind = kind;
+            if (defVal.startsWith("6:")) dep.classList.add("show");
+            sel.addEventListener("change", () => {
+              dep.classList.toggle("show", sel.value.startsWith("6:"));
+              finalizeScript(true);
+            });
+            dep.addEventListener("input", () => finalizeScript(true));
+            cell.appendChild(sel);
+            cell.appendChild(dep);
+            return cell;
+          }
+
+          grid.appendChild(nameEl);
+          grid.appendChild(makeCell("cat-sel-scen", "" + defS, "scen"));
+          grid.appendChild(makeCell("cat-sel-pers", defP, "pers"));
+        });
+        document.getElementById("catPanel").classList.add("visible");
+      }
+
+      function getCatMap() {
+        const m = {};
+        document.querySelectorAll(".cat-sel-scen").forEach((s) => {
+          if (!m[s.dataset.cat]) m[s.dataset.cat] = {};
+          m[s.dataset.cat].scen = s.value;
+          m[s.dataset.cat].scenDepth = 4;
+        });
+        document.querySelectorAll(".cat-sel-pers").forEach((s) => {
+          if (!m[s.dataset.cat]) m[s.dataset.cat] = {};
+          m[s.dataset.cat].pers = s.value;
+          m[s.dataset.cat].persDepth = 4;
+        });
+        document.querySelectorAll(".depth-inp").forEach((inp) => {
+          const c = inp.dataset.cat,
+            k = inp.dataset.kind,
+            v = parseInt(inp.value) || 4;
+          if (m[c]) m[c][k === "scen" ? "scenDepth" : "persDepth"] = v;
+        });
+        return m;
+      }
+
+      // ═══════════════════════════════════════════════
+      // ST ENTRY BUILDER
+      // posKey: '0','1','2','3','4','5','6:0','6:1','6:2','7'
+      // depthNum: injection depth (only meaningful for posKey '6:x', default 4)
+      // outletName: only used when posKey === '7'
+      // ═══════════════════════════════════════════════
+      function makeSTEntry(
+        uid,
+        key,
+        keysecondary,
+        selective,
+        selectiveLogic,
+        comment,
+        content,
+        posKey,
+        order,
+        delay,
+        outletName,
+        depthNum,
+      ) {
+        const parts = String(posKey).split(":");
+        const position = parseInt(parts[0]) || 0;
+        const role =
+          parts.length > 1 ? parseInt(parts[1]) : position === 7 ? null : 0;
+        const isOutlet = position === 7;
+        return {
+          uid,
+          key,
+          keysecondary,
+          comment,
+          content,
+          constant: false,
+          vectorized: false,
+          selective,
+          selectiveLogic,
+          addMemo: true,
+          order,
+          position,
+          disable: false,
+          ignoreBudget: false,
+          excludeRecursion: false,
+          preventRecursion: false,
+          matchPersonaDescription: false,
+          matchCharacterDescription: false,
+          matchCharacterPersonality: false,
+          matchCharacterDepthPrompt: false,
+          matchScenario: false,
+          matchCreatorNotes: false,
+          delayUntilRecursion: false,
+          probability: 100,
+          useProbability: false,
+          depth: depthNum ?? 4,
+          outletName: isOutlet ? outletName || "" : "",
+          group: "",
+          groupOverride: false,
+          groupWeight: 100,
+          scanDepth: null,
+          caseSensitive: null,
+          matchWholeWords: null,
+          useGroupScoring: null,
+          automationId: "",
+          role,
+          sticky: 0,
+          cooldown: 0,
+          delay,
+          triggers: [],
+          displayIndex: uid,
+          characterFilter: { isExclude: false, names: [], tags: [] },
+        };
+      }
+
+      // ═══════════════════════════════════════════════
+      // SCRIPT → ST
+      // ═══════════════════════════════════════════════
+      function scriptToST(entries, catMap, outlet, opts) {
+        const { merge, scenPref, persPref } = opts;
+        const result = {};
+        let uid = 0;
+
+        entries.forEach((e) => {
+          const keys = Array.isArray(e.keywords) ? e.keywords : [];
+          let sec = [],
+            selective = false,
+            selectiveLogic = 0;
+          if (e.filters) {
+            if (e.filters.notWith && e.filters.notWith.length) {
+              sec = e.filters.notWith;
+              selectiveLogic = 2;
+              selective = true;
+            } else if (e.filters.requiresAll && e.filters.requiresAll.length) {
+              sec = e.filters.requiresAll;
+              selectiveLogic = 1;
+              selective = true;
+            } else if (e.filters.requiresAny && e.filters.requiresAny.length) {
+              sec = e.filters.requiresAny;
+              selectiveLogic = 0;
+              selective = true;
+            }
+          }
+          const order = (e.priority ?? 5) * 10,
+            delay = e.minMessages ?? 0;
+          const cmap = catMap[e.category] || {
+            scen: "0",
+            scenDepth: 4,
+            pers: "7",
+            persDepth: 4,
+          };
+
+          let label = entryLabel(e);
+          if (e.category && e.category !== "If-Chain") {
+            label = catLabel(e.category) + " \u2014 " + label;
+          }
+
+          let sText = e.scenario ? cleanScenario(e.scenario) : "";
+          let pText = e.personality ? cleanPersonality(e.personality) : "";
+          if (sText && scenPref) sText = scenPref.replace(/\\n/g, "\n") + sText;
+          if (pText && persPref) pText = persPref.replace(/\\n/g, "\n") + pText;
+
+          if (merge) {
+            const combined = [sText, pText].filter(Boolean).join("\n\n");
+            if (combined) {
+              const st = makeSTEntry(
+                uid,
+                keys,
+                sec,
+                selective,
+                selectiveLogic,
+                label,
+                combined,
+                cmap.scen,
+                order,
+                delay,
+                outlet,
+                cmap.scenDepth,
+              );
+              st._type = "merged";
+              result[uid] = st;
+              uid++;
+            }
+          } else {
+            if (sText) {
+              const st = makeSTEntry(
+                uid,
+                keys,
+                sec,
+                selective,
+                selectiveLogic,
+                label,
+                sText,
+                cmap.scen,
+                order,
+                delay,
+                outlet,
+                cmap.scenDepth,
+              );
+              st._type = "scenario";
+              result[uid] = st;
+              uid++;
+            }
+            if (pText) {
+              const st = makeSTEntry(
+                uid,
+                keys,
+                sec,
+                selective,
+                selectiveLogic,
+                label,
+                pText,
+                cmap.pers,
+                order,
+                delay,
+                outlet,
+                cmap.persDepth,
+              );
+              st._type = "personality";
+              result[uid] = st;
+              uid++;
+            }
+          }
+        });
+        return { entries: result, count: uid };
+      }
+
+      // ═══════════════════════════════════════════════
+      // ST ↔ JAI JSON
+      // Bulletproof keyword grabber added in v5.2
+      // ═══════════════════════════════════════════════
+      function stToJai(e, uid) {
+        const k = Array.isArray(e.key) ? e.key : e.key ? [e.key] : [];
+        return {
+          id: uid,
+          keyword: k,
+          keys: k,
+          keysecondary: Array.isArray(e.keysecondary) ? e.keysecondary : [],
+          comment: e.comment || "",
+          content: e.content || "",
+          enabled: !e.disable,
+          constant: !!e.constant,
+          probability:
+            e.useProbability === false ? 100 : (e.probability ?? 100),
+          order: e.order ?? 100,
+          group: e.group || "",
+          groupWeight: e.groupWeight ?? 100,
+          groupOverride: !!e.groupOverride,
+          useGroupScoring: e.useGroupScoring ?? false,
+          selective: e.selective ?? true,
+          selectiveLogic: e.selectiveLogic ?? 0,
+          minMessages: e.delay ?? 0,
+          caseSensitive: e.caseSensitive ?? false,
+          matchWholeWords: e.matchWholeWords ?? true,
+        };
+      }
+
+      function jaiToSt(e, uid) {
+        const label = e.comment || e.name || e.title || "";
+        let k = e.keys || e.keywords || e.keyword || e.key || [];
+        if (typeof k === "string")
+          k = k
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        else if (!Array.isArray(k)) k = [k];
+        let ks = e.keysecondary || e.secondary_keys || [];
+        if (typeof ks === "string")
+          ks = ks
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        else if (!Array.isArray(ks)) ks = [ks];
+        const st = makeSTEntry(
+          uid,
+          k,
+          ks,
+          e.selective ?? true,
+          e.selectiveLogic ?? 0,
+          label,
+          e.content || "",
+          "0",
+          e.order ?? 100,
+          e.minMessages ?? 0,
+          "",
+          4,
+        );
+        st._type = "jai";
+        return st;
+      }
+
+      // ═══════════════════════════════════════════════
+      // WARNINGS
+      // ═══════════════════════════════════════════════
+      function buildWarnings(entries, fmt) {
+        const w = [];
+        if (fmt === "st") {
+          const pos = entries.filter(
+            (e) => e.position !== undefined && e.position !== 4,
+          );
+          if (pos.length)
+            w.push(
+              "<strong>" +
+                pos.length +
+                " entries</strong> use non-default positions — dropped in JAI.",
+            );
+          if (entries.filter((e) => e.sticky > 0).length)
+            w.push("Sticky entries found — dropped (no JAI equivalent).");
+          if (entries.filter((e) => e.vectorized).length)
+            w.push(
+              "Vectorized entries found — JAI uses keyword matching only.",
+            );
+        } else if (fmt === "jai") {
+          w.push(
+            "Position set to <strong>Before Char (0)</strong> for all entries. Adjust in ST as needed.",
+          );
+        } else if (fmt === "jai_script" || fmt === "if_chain") {
+          const isMerged = document.getElementById("mergePairsCheck").checked;
+          if (isMerged) {
+            w.push(
+              "Script entries merged into a <strong>single ST entry</strong> at the chosen Scenario position.",
+            );
+          } else {
+            w.push(
+              "Each script entry generates up to <strong>2 ST entries</strong> (scenario + personality). Adjust positions in the panel if needed.",
+            );
+          }
+          w.push(
+            "For any entries mapped to <strong>7 / Outlet</strong>, make sure to add <code>{{outlet::name}}</code> to your character card.",
+          );
+
+          if (fmt === "jai_script") {
+            const f = entries.filter(
+              (e) => e.filters && Object.keys(e.filters).length > 0,
+            );
+            if (f.length)
+              w.push(
+                "<strong>" +
+                  f.length +
+                  " entries</strong> use filters — mapped to ST secondary keys.",
+              );
+          }
+          if (fmt === "if_chain")
+            w.push(
+              "If-chain scripts may have duplicate keyword sets. They have been grouped under the <strong>If-Chain</strong> category.",
+            );
+        }
+        return w;
+      }
+
+      // ═══════════════════════════════════════════════
+      // MODAL CONTROLS
+      // ═══════════════════════════════════════════════
+      const modal = document.getElementById("previewModal");
+      const mTitle = document.getElementById("pmTitle");
+      const mBody = document.getElementById("pmBody");
+      const mClose = document.getElementById("pmClose");
+      function showPreview(title, content) {
+        mTitle.textContent = title;
+        mBody.textContent = content;
+        modal.classList.add("visible");
+      }
+      mClose.onclick = () => modal.classList.remove("visible");
+      modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove("visible");
+      };
+
+      // ═══════════════════════════════════════════════
+      // TABLE RENDER
+      // ═══════════════════════════════════════════════
+      function tagList(arr, cls) {
+        if (!arr || !arr.length)
+          return '<td><span style="color:var(--text-muted);font-size:.7rem">—</span></td>';
+        const vis = arr.slice(0, 4),
+          rest = arr.length - vis.length;
+        return (
+          '<td><div class="tl">' +
+          vis
+            .map(
+              (k) => '<span class="tag ' + cls + '">' + escHtml(k) + "</span>",
+            )
+            .join("") +
+          (rest > 0 ? '<span class="tag sec">+' + rest + "</span>" : "") +
+          "</div></td>"
+        );
+      }
+      function posBadge(pos, role) {
+        let key = String(pos);
+        if (pos === 6 && role !== null && role !== undefined) key = "6:" + role;
+        const cls =
+          pos === 0
+            ? "p0"
+            : pos === 1
+              ? "p1"
+              : pos === 2
+                ? "p2"
+                : pos === 3
+                  ? "p3"
+                  : pos === 4
+                    ? "p4"
+                    : pos === 5
+                      ? "p5"
+                      : pos === 6
+                        ? "p6"
+                        : pos === 7
+                          ? "p7"
+                          : "px";
+        const lbl =
+          {
+            0: "0·Before",
+            1: "1·After",
+            2: "2·BefEx",
+            3: "3·AftEx",
+            4: "4·AN↑",
+            5: "5·AN↓",
+            "6:0": "6·Sys",
+            "6:1": "6·User",
+            "6:2": "6·Asst",
+            7: "7·Outlet",
+          }[key] ?? "" + pos;
+        return '<span class="pos-badge ' + cls + '">' + lbl + "</span>";
+      }
+      function renderTable(stEntries) {
+        const tbody = document.getElementById("tBody");
+        tbody.innerHTML = "";
+        Object.values(stEntries).forEach((e, i) => {
+          let tb = '<span class="type-badge tb-jai">entry</span>';
+          if (e._type === "scenario")
+            tb = '<span class="type-badge tb-scen">scenario</span>';
+          else if (e._type === "personality")
+            tb = '<span class="type-badge tb-pers">personality</span>';
+          else if (e._type === "merged")
+            tb = '<span class="type-badge tb-merged">merged</span>';
+          const tr = document.createElement("tr");
+          tr.className = "click-row";
+          tr.onclick = () => showPreview(e.comment, e.content);
+          tr.innerHTML =
+            '<td class="mono">' +
+            i +
+            "</td><td>" +
+            tb +
+            '</td><td class="truncate" title="Click/Tap to view full text">' +
+            escHtml(e.comment) +
+            '<span class="tap-hint">Tap to preview</span></td>' +
+            tagList(e.key, "kw") +
+            tagList(e.keysecondary, "sec") +
+            "<td>" +
+            posBadge(e.position, e.role) +
+            '</td><td class="mono">' +
+            e.order +
+            '</td><td class="mono">' +
+            (e.delay || 0) +
+            "</td>";
+          tbody.appendChild(tr);
+        });
+      }
+
+      // ═══════════════════════════════════════════════
+      // STATE + HELPERS
+      // ═══════════════════════════════════════════════
+      let lastOut = "",
+        pendingEntries = null,
+        pendingFmt = "";
+      function getOutlet() {
+        const v = document.getElementById("outletName").value.trim(),
+          n = document.getElementById("lbName").value.trim();
+        if (v) return v;
+        if (n) return n.toLowerCase().replace(/[^a-z0-9]/g, "_") + "_knowledge";
+        return "lorebook_knowledge";
+      }
+      function getFilename() {
+        const n = document.getElementById("lbName").value.trim();
+        return n
+          ? n.replace(/[^a-zA-Z0-9 _-]/g, "").replace(/\s+/g, "_") + "_ST.json"
+          : "lorebook_ST.json";
+      }
+
+      // ═══════════════════════════════════════════════
+      // SCRIPT OPTIONS LIVE PREVIEW
+      // ═══════════════════════════════════════════════
+      document
+        .getElementById("mergePairsCheck")
+        .addEventListener("change", (e) => {
+          document
+            .querySelectorAll(".cat-sel-pers")
+            .forEach((el) => (el.disabled = e.target.checked));
+          document.getElementById("persPosHead").style.opacity = e.target
+            .checked
+            ? "0.4"
+            : "1";
+          finalizeScript(true);
+        });
+      document
+        .getElementById("scenPrefix")
+        .addEventListener("input", () => finalizeScript(true));
+      document
+        .getElementById("persPrefix")
+        .addEventListener("input", () => finalizeScript(true));
+
+      // ═══════════════════════════════════════════════
+      // MAIN CONVERT
+      // ═══════════════════════════════════════════════
+      function doConvert(text) {
+        const det = detectFormat(text);
+        if (!det) {
+          showBadge(
+            "error",
+            "Cannot detect format. Drop a valid ST/JAI file or valid text/script.",
+          );
+          return;
+        }
+        updatePills(det.type);
+
+        if (det.type === "jai_script") {
+          let entries;
+          try {
+            entries = parseScript(text);
+          } catch (e) {
+            showBadge("error", "Script parse failed: " + e.message);
+            return;
+          }
+          if (!entries.length) {
+            showBadge("warn", "No entries found in loreEntries.");
+            return;
+          }
+          pendingEntries = entries;
+          pendingFmt = "jai_script";
+          buildCatPanel(entries);
+          showBadge(
+            "ok",
+            "Detected <strong>loreEntries Script</strong> — " +
+              entries.length +
+              " entr" +
+              (entries.length === 1 ? "y" : "ies") +
+              ". Set options above, then click Convert again.",
+          );
+          document.getElementById("convertBtn").onclick = () =>
+            finalizeScript(false);
+          finalizeScript(true);
+          return;
+        }
+
+        if (det.type === "if_chain") {
+          let entries;
+          try {
+            entries = parseIfChain(text);
+          } catch (e) {
+            showBadge("error", "if-chain parse failed: " + e.message);
+            return;
+          }
+          if (!entries.length) {
+            showBadge(
+              "warn",
+              "No keyword-based entries found. Check the script uses lastMessage.includes(…) and context.character.personality/scenario +=",
+            );
+            return;
+          }
+          pendingEntries = entries;
+          pendingFmt = "if_chain";
+          buildCatPanel(entries);
+          showBadge(
+            "ok",
+            "Detected <strong>if-chain Script</strong> — " +
+              entries.length +
+              " blocks. Set options above, then click Convert again.",
+          );
+          document.getElementById("convertBtn").onclick = () =>
+            finalizeScript(false);
+          finalizeScript(true);
+          return;
+        }
+
+        if (det.type === "st_json") {
+          const raw = Object.values(det.parsed.entries);
+          if (!raw.length) {
+            showBadge("warn", "No entries found.");
+            return;
+          }
+          lastOut = JSON.stringify(raw.map(stToJai), null, 2);
+          showWarnings(buildWarnings(raw, "st"));
+          showBadge(
+            "ok",
+            "Detected <strong>ST World Info</strong> — " +
+              raw.length +
+              " entr" +
+              (raw.length === 1 ? "y" : "ies") +
+              " → JAI JSON",
+          );
+          populate(
+            raw.length,
+            raw.length,
+            "ST World Info",
+            "JAI Lorebook JSON",
+            false,
+          );
+          renderTable(
+            Object.fromEntries(
+              raw.map((e, i) => [
+                i,
+                { ...e, comment: e.comment || "entry " + i, _type: "jai" },
+              ]),
+            ),
+          );
+          return;
+        }
+
+        if (det.type === "jai_json") {
+          const raw = det.parsed;
+          if (!raw.length) {
+            showBadge("warn", "No entries found.");
+            return;
+          }
+          const obj = { entries: {} };
+          raw.forEach((e, i) => {
+            obj.entries[i] = jaiToSt(e, i);
+          });
+
+          // Clean export
+          const exportObj = { entries: {} };
+          Object.keys(obj.entries).forEach((k) => {
+            exportObj.entries[k] = { ...obj.entries[k] };
+            delete exportObj.entries[k]._type;
+          });
+          lastOut = JSON.stringify(exportObj, null, 2);
+
+          showWarnings(buildWarnings(raw, "jai"));
+          showBadge(
+            "ok",
+            "Detected <strong>JAI Lorebook JSON</strong> — " +
+              raw.length +
+              " entr" +
+              (raw.length === 1 ? "y" : "ies") +
+              " → ST World Info",
+          );
+          populate(
+            raw.length,
+            Object.keys(obj.entries).length,
+            "JAI Lorebook JSON",
+            "ST World Info",
+            false,
+          );
+          renderTable(obj.entries);
+          return;
+        }
+      }
+
+      function finalizeScript(isPreview = false) {
+        if (!pendingEntries) return;
+
+        const merge = document.getElementById("mergePairsCheck").checked;
+        const scenPref = document.getElementById("scenPrefix").value;
+        const persPref = document.getElementById("persPrefix").value;
+
+        const { entries, count } = scriptToST(
+          pendingEntries,
+          getCatMap(),
+          getOutlet(),
+          { merge, scenPref, persPref },
+        );
+
+        // Clean export JSON
+        const exportObj = { entries: {} };
+        Object.keys(entries).forEach((k) => {
+          exportObj.entries[k] = { ...entries[k] };
+          delete exportObj.entries[k]._type;
+        });
+        lastOut = JSON.stringify(exportObj, null, 2);
+
+        if (!isPreview) {
+          showWarnings(buildWarnings(pendingEntries, pendingFmt));
+          showBadge(
+            "ok",
+            "Converted <strong>" +
+              pendingEntries.length +
+              " script entries</strong> → <strong>" +
+              count +
+              " ST entries</strong>",
+          );
+        }
+        const sourceName =
+          pendingFmt === "if_chain" ? "if-chain Script" : "loreEntries Script";
+        populate(
+          pendingEntries.length,
+          count,
+          sourceName,
+          "ST World Info",
+          isPreview,
+        );
+        renderTable(entries);
+      }
+
+      function populate(srcCount, stCount, src, tgt, isPreview = false) {
+        document.getElementById("rCount").textContent = srcCount;
+        document.getElementById("rST").textContent = stCount;
+        document.getElementById("rSrc").textContent = src;
+        document.getElementById("rTgt").textContent = tgt;
+        document.getElementById("outputJson").value = lastOut;
+
+        if (isPreview) {
+          document.getElementById("exportSection").classList.remove("visible");
+          document.getElementById("previewNote").classList.add("visible");
+        } else {
+          document.getElementById("exportSection").classList.add("visible");
+          document.getElementById("previewNote").classList.remove("visible");
+        }
+
+        document
+          .getElementById("resultsSection")
+          .classList.add("visible", "fade-in");
+      }
+
+      // ═══════════════════════════════════════════════
+      // UI HELPERS
+      // ═══════════════════════════════════════════════
+      function showBadge(type, html) {
+        document.getElementById("badgeDot").className = "badge-dot dot-" + type;
+        document.getElementById("detectionText").innerHTML = html;
+        document.getElementById("detectionBadge").classList.add("visible");
+      }
+      function showWarnings(warns) {
+        const box = document.getElementById("warningsBox");
+        if (warns.length) {
+          box.innerHTML =
+            "<strong>⚠ Conversion notes</strong><ul>" +
+            warns.map((w) => "<li>" + w + "</li>").join("") +
+            "</ul>";
+          box.classList.add("visible");
+        } else box.classList.remove("visible");
+      }
+      function updatePills(type) {
+        document
+          .querySelectorAll(".fpill")
+          .forEach((p) => p.classList.remove("active"));
+        const map = {
+          st_json: "pill-st",
+          jai_json: "pill-jai",
+          jai_script: "pill-js",
+          if_chain: "pill-chain",
+        };
+        if (map[type])
+          document.getElementById(map[type]).classList.add("active");
+      }
+      function escHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      // ═══════════════════════════════════════════════
+      // EVENTS
+      // ═══════════════════════════════════════════════
+      const pasteEl = document.getElementById("pasteInput");
+      const dropEl = document.getElementById("dropZone");
+      const fileEl = document.getElementById("fileInput");
+
+      pasteEl.addEventListener("input", () => {
+        const v = pasteEl.value.trim();
+        if (v) {
+          const d = detectFormat(v);
+          if (d) updatePills(d.type);
+        }
+      });
+
+      document.getElementById("lbName").addEventListener("input", () => {
+        const outlet = document.getElementById("outletName");
+        if (!outlet.dataset.touched) {
+          const n = document.getElementById("lbName").value.trim();
+          outlet.placeholder =
+            "e.g. " +
+            (n
+              ? n.toLowerCase().replace(/[^a-z0-9]/g, "_") + "_knowledge"
+              : "char_knowledge");
+        }
+      });
+      document
+        .getElementById("outletName")
+        .addEventListener("input", function () {
+          this.dataset.touched = "1";
+        });
+
+      document
+        .getElementById("convertBtn")
+        .addEventListener("click", function () {
+          const v = pasteEl.value.trim();
+          if (!v) {
+            showBadge(
+              "warn",
+              "Nothing to convert — paste or drop a file first.",
+            );
+            return;
+          }
+          const det = detectFormat(v);
+          if (!det || (det.type !== "jai_script" && det.type !== "if_chain")) {
+            this.onclick = null;
+            pendingEntries = null;
+            doConvert(v);
+          } else if (!pendingEntries) {
+            doConvert(v);
+          } else {
+            finalizeScript(false);
+          }
+        });
+
+      document.getElementById("clearBtn").addEventListener("click", () => {
+        pasteEl.value = "";
+        ["detectionBadge", "warningsBox", "catPanel", "resultsSection"].forEach(
+          (id) =>
+            document.getElementById(id).classList.remove("visible", "fade-in"),
+        );
+        document.getElementById("exportSection").classList.remove("visible");
+        document.getElementById("previewNote").classList.remove("visible");
+        document
+          .querySelectorAll(".fpill")
+          .forEach((p) => p.classList.remove("active"));
+        document.getElementById("convertBtn").onclick = null;
+        pendingEntries = null;
+        lastOut = "";
+      });
+
+      dropEl.addEventListener("click", () => fileEl.click());
+      dropEl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") fileEl.click();
+      });
+      fileEl.addEventListener("change", () => {
+        if (fileEl.files[0]) readFile(fileEl.files[0]);
+      });
+      dropEl.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropEl.classList.add("drag-over");
+      });
+      dropEl.addEventListener("dragleave", () =>
+        dropEl.classList.remove("drag-over"),
+      );
+      dropEl.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropEl.classList.remove("drag-over");
+        if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+      });
+
+      function readFile(f) {
+        if (f.name.toLowerCase().endsWith(".docx")) {
+          const r = new FileReader();
+          r.onload = async (ev) => {
+            try {
+              showBadge("warn", "Extracting JSON/Code from DOCX...");
+              const txt = await extractDocxText(ev.target.result);
+              pasteEl.value = txt;
+              doConvert(txt);
+            } catch (e) {
+              showBadge("error", "DOCX Read Failed: " + e.message);
+            }
+          };
+          r.readAsArrayBuffer(f);
+        } else {
+          const r = new FileReader();
+          r.onload = (ev) => {
+            pasteEl.value = ev.target.result;
+            doConvert(ev.target.result);
+          };
+          r.readAsText(f);
+        }
+      }
+
+      document.getElementById("copyBtn").addEventListener("click", () => {
+        if (!lastOut) return;
+        navigator.clipboard.writeText(lastOut).then(() => {
+          const b = document.getElementById("copyBtn");
+          b.textContent = "copied!";
+          setTimeout(() => {
+            b.textContent = "copy";
+          }, 1800);
+        });
+      });
+      document.getElementById("downloadBtn").addEventListener("click", () => {
+        if (!lastOut) return;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(
+          new Blob([lastOut], { type: "application/json" }),
+        );
+        a.download = getFilename();
+        a.click();
+      });
+
+      // ═══════════════════════════════════════════════
+      // THEME TOGGLE
+      // ═══════════════════════════════════════════════
+      (function () {
+        const btn = document.getElementById("themeToggle");
+        const root = document.documentElement;
+        let dark = true;
+        if (
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: light)").matches
+        ) {
+          dark = false;
+          root.classList.add("light");
+          btn.textContent = "☀ Light";
+        }
+        btn.addEventListener("click", () => {
+          dark = !dark;
+          root.classList.add("no-transition");
+          root.classList.toggle("light", !dark);
+          btn.textContent = dark ? "🌙 Dark" : "☀ Light";
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => root.classList.remove("no-transition")),
+          );
+        });
+      })();
+    </script>
+  </body>
+</html>
