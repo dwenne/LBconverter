@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lorebook Converter · ST ↔ JanitorAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0d0c0a;
+    --bg2:       #131210;
+    --bg3:       #1a1815;
+    --border:    #2e2a23;
+    --border2:   #3d3830;
+    --gold:      #c9a84c;
+    --gold2:     #e8c96a;
+    --gold-dim:  #7a6530;
+    --amber:     #d4813a;
+    --red:       #c0513a;
+    --green:     #5a9e6f;
+    --text:      #d4cfc4;
+    --text-dim:  #8a8070;
+    --text-muted:#55504a;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 17px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background texture ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -10%, #2a1f0a22 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 80% 80%, #1a0f0522 0%, transparent 50%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  /* ── Header ── */
+  header { text-align: center; margin-bottom: 52px; }
+  .rune-line {
+    display: flex; align-items: center; gap: 16px;
+    color: var(--gold-dim); font-size: 11px; letter-spacing: 4px;
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+  .rune-line::before, .rune-line::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold-dim), transparent);
+  }
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-weight: 700;
+    color: var(--gold2);
+    letter-spacing: 0.04em;
+    line-height: 1.15;
+    text-shadow: 0 0 40px #c9a84c44;
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Drop zone ── */
+  .drop-zone {
+    border: 1px dashed var(--border2);
+    border-radius: 4px;
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    background: var(--bg2);
+    position: relative;
+    margin-bottom: 28px;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--gold-dim);
+    background: #1a1810;
+  }
+  .drop-zone.drag-over { border-style: solid; }
+  .drop-icon {
+    font-size: 2rem; margin-bottom: 12px; opacity: .5;
+    display: block;
+  }
+  .drop-label {
+    font-family: 'Cinzel', serif;
+    font-size: .85rem; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .drop-sub { font-size: .9rem; color: var(--text-muted); font-style: italic; }
+  #fileInput { display: none; }
+
+  /* ── Or paste ── */
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: .75rem; letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color .2s;
+    line-height: 1.6;
+  }
+  textarea:focus { border-color: var(--gold-dim); }
+  textarea::placeholder { color: var(--text-muted); font-style: italic; }
+
+  /* ── Buttons ── */
+  .btn-row { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-size: .78rem; letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 11px 24px;
+    border: 1px solid;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background .15s, color .15s, box-shadow .15s;
+    background: transparent;
+  }
+  .btn-primary {
+    border-color: var(--gold);
+    color: var(--gold2);
+  }
+  .btn-primary:hover {
+    background: var(--gold);
+    color: var(--bg);
+    box-shadow: 0 0 20px #c9a84c44;
+  }
+  .btn-secondary {
+    border-color: var(--border2);
+    color: var(--text-dim);
+  }
+  .btn-secondary:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+  .btn:disabled {
+    opacity: .35; cursor: not-allowed;
+  }
+
+  /* ── Detection badge ── */
+  #detectionBadge {
+    display: none;
+    align-items: center; gap: 10px;
+    margin-top: 20px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--bg3);
+    font-size: .9rem;
+  }
+  #detectionBadge.visible { display: flex; }
+  .badge-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); flex-shrink: 0;
+    box-shadow: 0 0 6px var(--green);
+  }
+  .badge-dot.warn { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .badge-dot.error { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  #detectionText { color: var(--text); flex: 1; }
+  #detectionText strong { color: var(--gold2); font-family: 'Cinzel', serif; font-size: .8rem; letter-spacing: .05em; }
+
+  /* ── Warnings ── */
+  #warningsBox {
+    display: none; margin-top: 16px;
+    padding: 14px 16px;
+    border: 1px solid #7a3a2044;
+    border-left: 3px solid var(--amber);
+    border-radius: 3px;
+    background: #1a100844;
+    font-size: .88rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  #warningsBox.visible { display: block; }
+  #warningsBox ul { padding-left: 18px; margin-top: 6px; }
+  #warningsBox li { margin-bottom: 4px; }
+  #warningsBox strong { color: var(--amber); }
+
+  /* ── Divider ── */
+  .divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 36px 0;
+    color: var(--text-muted); font-size: .75rem;
+    letter-spacing: .15em; text-transform: uppercase;
+    font-family: 'Cinzel', serif;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── Results ── */
+  #resultsSection { display: none; }
+  #resultsSection.visible { display: block; }
+
+  .result-meta {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    margin-bottom: 20px; align-items: baseline;
+  }
+  .result-stat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    color: var(--text-dim);
+  }
+  .result-stat span { color: var(--gold2); font-size: .95rem; }
+
+  /* ── Entry table ── */
+  .table-wrap { overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+  thead tr { background: var(--bg3); border-bottom: 1px solid var(--border2); }
+  th {
+    text-align: left; padding: 10px 14px;
+    font-family: 'Cinzel', serif; font-size: .7rem;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--gold-dim); font-weight: 400;
+    white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg3); }
+  td { padding: 9px 14px; vertical-align: top; color: var(--text); }
+  td.mono { font-family: 'JetBrains Mono', monospace; font-size: .73rem; color: var(--text-dim); }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag {
+    background: #2a2520; border: 1px solid var(--border2);
+    border-radius: 2px; padding: 1px 6px;
+    font-size: .72rem; font-family: 'JetBrains Mono', monospace;
+    color: var(--gold-dim); white-space: nowrap;
+  }
+  .tag.secondary { color: var(--text-muted); }
+  .pill {
+    display: inline-block; padding: 1px 8px; border-radius: 10px;
+    font-size: .72rem; font-family: 'Cinzel', serif;
+    letter-spacing: .05em;
+  }
+  .pill-on { background: #1a2e1e; color: var(--green); border: 1px solid #2a4a30; }
+  .pill-off { background: #2a1515; color: var(--red); border: 1px solid #3a2020; }
+  .pill-const { background: #2a220e; color: var(--gold); border: 1px solid #3a3015; }
+  .truncate { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── Output JSON ── */
+  .output-wrap { position: relative; }
+  .output-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  #outputJson {
+    min-height: 180px;
+    background: #0a0908;
+    border-color: var(--border2);
+    color: #8fbf8f;
+  }
+  .copy-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem; letter-spacing: .05em;
+    padding: 5px 12px;
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .copy-btn:hover { color: var(--gold2); border-color: var(--gold-dim); }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 60px; text-align: center;
+    font-size: .8rem; color: var(--text-muted);
+    font-style: italic;
+  }
+  footer a { color: var(--gold-dim); text-decoration: none; }
+  footer a:hover { color: var(--gold2); }
+
+  /* ── Animations ── */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .fade-in { animation: fadeIn .3s ease forwards; }
+
+  /* ── Field map tooltip strip ── */
+  .field-map {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    gap: 8px 4px; font-size: .8rem;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 16px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 3px;
+    margin-top: 20px;
+  }
+  .field-map .fm-st { color: var(--text-dim); text-align: right; }
+  .field-map .fm-arrow { color: var(--gold-dim); text-align: center; font-size: .9rem; }
+  .field-map .fm-jai { color: var(--text-dim); text-align: left; }
+  .field-map .fm-note { grid-column: 1 / -1; color: var(--text-muted); font-size: .72rem; margin-top: 2px; }
+  .field-map .fm-head {
+    grid-column: 1 / -1; color: var(--gold-dim);
+    font-family: 'Cinzel', serif; font-size: .7rem;
+    letter-spacing: .1em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px; margin-bottom: 4px;
+  }
+
+  details summary {
+    cursor: pointer; color: var(--text-dim);
+    font-size: .85rem; list-style: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  details summary::before {
+    content: '▸'; color: var(--gold-dim);
+    font-size: .7rem; transition: transform .2s;
+  }
+  details[open] summary::before { transform: rotate(90deg); }
+  details summary::-webkit-details-marker { display: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="rune-line">Tome Alchemy</div>
+    <h1>Lorebook Converter</h1>
+    <p class="subtitle">SillyTavern World Info &nbsp;⇄&nbsp; JanitorAI Lorebook</p>
+  </header>
+
+  <!-- Drop zone -->
+  <div class="section-label">Load file</div>
+  <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Drop JSON file here or click to browse">
+    <span class="drop-icon">📖</span>
+    <div class="drop-label">Drop your lorebook JSON here</div>
+    <div class="drop-sub">or click to browse — accepts ST World Info or JanitorAI lorebook</div>
+  </div>
+  <input type="file" id="fileInput" accept=".json,application/json">
+
+  <!-- Paste -->
+  <div class="section-label" style="margin-top:24px;">Or paste JSON</div>
+  <textarea id="pasteInput" placeholder='Paste SillyTavern {"entries":{…}} or JanitorAI [{…}] JSON here…'></textarea>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="convertBtn">Convert ⟶</button>
+    <button class="btn btn-secondary" id="clearBtn">Clear</button>
+  </div>
+
+  <div id="detectionBadge">
+    <div class="badge-dot" id="badgeDot"></div>
+    <div id="detectionText"></div>
+  </div>
+  <div id="warningsBox"></div>
+
+  <!-- Field map reference -->
+  <details style="margin-top:24px;">
+    <summary>Field mapping reference</summary>
+    <div class="field-map" style="margin-top:12px;">
+      <div class="fm-head">SillyTavern → JanitorAI</div>
+      <div class="fm-st">key</div><div class="fm-arrow">→</div><div class="fm-jai">keys</div>
+      <div class="fm-st">keysecondary</div><div class="fm-arrow">→</div><div class="fm-jai">keysecondary</div>
+      <div class="fm-st">disable: false</div><div class="fm-arrow">→</div><div class="fm-jai">enabled: true</div>
+      <div class="fm-st">constant</div><div class="fm-arrow">→</div><div class="fm-jai">constant (kept)</div>
+      <div class="fm-st">comment</div><div class="fm-arrow">→</div><div class="fm-jai">comment</div>
+      <div class="fm-st">content</div><div class="fm-arrow">→</div><div class="fm-jai">content</div>
+      <div class="fm-st">probability</div><div class="fm-arrow">→</div><div class="fm-jai">probability</div>
+      <div class="fm-st">order</div><div class="fm-arrow">→</div><div class="fm-jai">order</div>
+      <div class="fm-st">group</div><div class="fm-arrow">→</div><div class="fm-jai">group</div>
+      <div class="fm-st">groupWeight</div><div class="fm-arrow">→</div><div class="fm-jai">groupWeight</div>
+      <div class="fm-st">selectiveLogic</div><div class="fm-arrow">→</div><div class="fm-jai">selectiveLogic</div>
+      <div class="fm-st">delay</div><div class="fm-arrow">→</div><div class="fm-jai">minMessages</div>
+      <div class="fm-st">caseSensitive</div><div class="fm-arrow">→</div><div class="fm-jai">caseSensitive</div>
+      <div class="fm-st">matchWholeWords</div><div class="fm-arrow">→</div><div class="fm-jai">matchWholeWords</div>
+      <div class="fm-st">useGroupScoring</div><div class="fm-arrow">→</div><div class="fm-jai">useGroupScoring</div>
+      <div class="fm-st" style="color:var(--text-muted)">position / sticky / cooldown</div><div class="fm-arrow">→</div><div class="fm-jai" style="color:var(--text-muted)">⚠ dropped (no JAI equivalent)</div>
+      <div class="fm-note">JAI → ST is the same mapping in reverse. Missing ST fields are filled with safe defaults.</div>
+    </div>
+  </details>
+
+  <div class="divider">Results</div>
+
+  <div id="resultsSection">
+
+    <div class="result-meta">
+      <div class="result-stat">Entries: <span id="entryCount">—</span></div>
+      <div class="result-stat">Source: <span id="sourceFormat">—</span></div>
+      <div class="result-stat">Output: <span id="targetFormat">—</span></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Keys</th>
+            <th>Status</th>
+            <th>Prob%</th>
+            <th>Group</th>
+            <th>Content</th>
+          </tr>
+        </thead>
+        <tbody id="entryTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="output-label">
+      <div class="section-label" style="margin:0; flex:1;">Output JSON</div>
+      <button class="copy-btn" id="copyBtn">copy</button>
+    </div>
+    <div class="output-wrap">
+      <textarea id="outputJson" readonly spellcheck="false"></textarea>
+    </div>
+
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary" id="downloadBtn">Download JSON</button>
+    </div>
+  </div>
+
+  <footer>
+    <p>Works entirely in your browser — no data leaves your machine.</p>
+    <p style="margin-top:6px;">
+      <a href="https://docs.sillytavern.app/usage/core-concepts/worldinfo/" target="_blank">ST Docs</a>
+      &nbsp;·&nbsp;
+      <a href="https://help.janitorai.com/en/category/scripts-1qzakwc/" target="_blank">JAI Scripts Docs</a>
+    </p>
+  </footer>
+
+</div>
+
+<script>
+// ── Selective logic labels ──────────────────────────────────────────────────
+const LOGIC_LABELS = ['AND ANY','AND ALL','NOT ANY','NOT ALL'];
+
+// ── Position labels (ST) ───────────────────────────────────────────────────
+const POSITION_LABELS = {
+  0:'Before Char Defs', 1:'After Char Defs',
+  2:'Before Example Msgs', 3:'After Example Msgs',
+  4:'Top of AN', 5:'Bottom of AN',
+  6:'@ Depth', 7:'Outlet'
+};
+
+// ── Detect format ──────────────────────────────────────────────────────────
+function detectFormat(obj) {
+  if (Array.isArray(obj)) return 'jai';
+  if (obj && typeof obj === 'object' && obj.entries && typeof obj.entries === 'object' && !Array.isArray(obj.entries)) return 'st';
+  // ST sometimes exported as flat object with numeric string keys
+  if (obj && typeof obj === 'object') {
+    const keys = Object.keys(obj);
+    if (keys.length && keys.every(k => !isNaN(parseInt(k)))) return 'st-flat';
+  }
+  return null;
+}
+
+// ── Normalize input to array of raw entries ────────────────────────────────
+function extractEntries(obj, fmt) {
+  if (fmt === 'jai') return obj;
+  if (fmt === 'st') return Object.values(obj.entries);
+  if (fmt === 'st-flat') return Object.values(obj);
+  return [];
+}
+
+// ── ST entry → JAI entry ───────────────────────────────────────────────────
+function stToJai(e) {
+  const out = {};
+  out.keys          = Array.isArray(e.key) ? e.key : (e.key ? [e.key] : []);
+  out.keysecondary  = Array.isArray(e.keysecondary) ? e.keysecondary : [];
+  out.comment       = e.comment || '';
+  out.content       = e.content || '';
+  out.enabled       = !e.disable;
+  out.constant      = !!e.constant;
+  out.probability   = e.useProbability === false ? 100 : (e.probability ?? 100);
+  out.order         = e.order ?? 100;
+  out.group         = e.group || '';
+  out.groupWeight   = e.groupWeight ?? 100;
+  out.groupOverride = !!e.groupOverride;
+  out.useGroupScoring = e.useGroupScoring ?? false;
+  out.selective     = e.selective ?? true;
+  out.selectiveLogic = e.selectiveLogic ?? 0;
+  out.minMessages   = e.delay ?? 0;
+  out.caseSensitive = e.caseSensitive ?? false;
+  out.matchWholeWords = e.matchWholeWords ?? true;
+  return out;
+}
+
+// ── JAI entry → ST entry ───────────────────────────────────────────────────
+function jaiToSt(e, uid) {
+  const out = {};
+  out.uid           = uid;
+  out.key           = Array.isArray(e.keys) ? e.keys : (e.keys ? [e.keys] : []);
+  out.keysecondary  = Array.isArray(e.keysecondary) ? e.keysecondary : [];
+  out.comment       = e.comment || '';
+  out.content       = e.content || '';
+  out.constant      = !!e.constant;
+  out.vectorized    = false;
+  out.selective     = e.selective ?? true;
+  out.selectiveLogic = e.selectiveLogic ?? 0;
+  out.addMemo       = true;
+  out.order         = e.order ?? 100;
+  out.position      = 4; // default: Top of AN (reasonable default)
+  out.disable       = e.enabled === false;
+  out.ignoreBudget  = false;
+  out.excludeRecursion = false;
+  out.preventRecursion = false;
+  out.matchPersonaDescription = false;
+  out.matchCharacterDescription = false;
+  out.matchCharacterPersonality = false;
+  out.matchCharacterDepthPrompt = false;
+  out.matchScenario = false;
+  out.matchCreatorNotes = false;
+  out.delayUntilRecursion = false;
+  out.probability   = e.probability ?? 100;
+  out.useProbability = true;
+  out.depth         = 4;
+  out.outletName    = '';
+  out.group         = e.group || '';
+  out.groupOverride = !!e.groupOverride;
+  out.groupWeight   = e.groupWeight ?? 100;
+  out.scanDepth     = null;
+  out.caseSensitive = e.caseSensitive ?? null;
+  out.matchWholeWords = e.matchWholeWords ?? null;
+  out.useGroupScoring = e.useGroupScoring ?? null;
+  out.automationId  = '';
+  out.role          = 0;
+  out.sticky        = 0;
+  out.cooldown      = 0;
+  out.delay         = e.minMessages ?? 0;
+  out.triggers      = [];
+  out.displayIndex  = uid;
+  out.characterFilter = { isExclude: false, names: [], tags: [] };
+  return out;
+}
+
+// ── Build warnings ─────────────────────────────────────────────────────────
+function buildWarnings(entries, fmt) {
+  const warns = [];
+  if (fmt === 'st') {
+    const hasPositions = entries.filter(e => e.position !== undefined && e.position !== 4);
+    if (hasPositions.length) {
+      const posNames = [...new Set(hasPositions.map(e => POSITION_LABELS[e.position] || `pos ${e.position}`))];
+      warns.push(`<strong>${hasPositions.length} entries</strong> use ST-specific insertion positions (${posNames.join(', ')}) — JAI has no equivalent; these entries will inject into personality/scenario via the Advanced Lorebook script instead.`);
+    }
+    const hasSticky = entries.filter(e => e.sticky > 0);
+    if (hasSticky.length) warns.push(`<strong>${hasSticky.length} entries</strong> use Sticky (timed effects) — not supported in JAI, field dropped.`);
+    const hasCooldown = entries.filter(e => e.cooldown > 0);
+    if (hasCooldown.length) warns.push(`<strong>${hasCooldown.length} entries</strong> use Cooldown — not supported in JAI, field dropped.`);
+    const hasAutomation = entries.filter(e => e.automationId);
+    if (hasAutomation.length) warns.push(`<strong>${hasAutomation.length} entries</strong> have Automation IDs (STscript hooks) — dropped; no JAI equivalent.`);
+    const hasOutlet = entries.filter(e => e.position === 7 || e.outletName);
+    if (hasOutlet.length) warns.push(`<strong>${hasOutlet.length} entries</strong> use Outlet position — JAI has no outlet macro system; content will still be present but placement won't be automatic.`);
+    const hasVectorized = entries.filter(e => e.vectorized);
+    if (hasVectorized.length) warns.push(`<strong>${hasVectorized.length} entries</strong> are flagged Vectorized (embedding-based activation) — JAI doesn't support vector matching; keyword matching only.`);
+    const hasCharFilter = entries.filter(e => e.characterFilter && (e.characterFilter.names?.length || e.characterFilter.tags?.length));
+    if (hasCharFilter.length) warns.push(`<strong>${hasCharFilter.length} entries</strong> have Character Filter rules — JAI doesn't have a built-in character filter; entries will apply globally.`);
+  }
+  if (fmt === 'jai') {
+    const hasMinMsg = entries.filter(e => e.minMessages > 0);
+    if (hasMinMsg.length) warns.push(`<strong>${hasMinMsg.length} entries</strong> use minMessages — converted to ST's <em>delay</em> field (message-count gate).`);
+    warns.push('JAI → ST: insertion <strong>position</strong> is set to "Top of AN" (4) for all entries. Adjust in SillyTavern as needed.');
+  }
+  return warns;
+}
+
+// ── Render preview table ───────────────────────────────────────────────────
+function renderTable(rawEntries, fmt) {
+  const tbody = document.getElementById('entryTableBody');
+  tbody.innerHTML = '';
+  rawEntries.forEach((e, i) => {
+    const keys = fmt === 'st'
+      ? (Array.isArray(e.key) ? e.key : [e.key || ''])
+      : (Array.isArray(e.keys) ? e.keys : [e.keys || '']);
+    const secondary = Array.isArray(e.keysecondary) ? e.keysecondary : [];
+    const isEnabled = fmt === 'st' ? !e.disable : (e.enabled !== false);
+    const isConst   = !!e.constant;
+    const prob      = e.probability ?? 100;
+    const group     = e.group || '';
+    const content   = e.content || '';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="mono">${i}</td>
+      <td>${escHtml(e.comment || '—')}</td>
+      <td>
+        <div class="tag-list">
+          ${keys.slice(0,4).map(k => `<span class="tag">${escHtml(k)}</span>`).join('')}
+          ${keys.length > 4 ? `<span class="tag secondary">+${keys.length-4}</span>` : ''}
+          ${secondary.slice(0,2).map(k => `<span class="tag secondary">${escHtml(k)}</span>`).join('')}
+          ${secondary.length > 2 ? `<span class="tag secondary">+${secondary.length-2}</span>` : ''}
+        </div>
+      </td>
+      <td>
+        ${isConst
+          ? '<span class="pill pill-const">constant</span>'
+          : `<span class="pill ${isEnabled ? 'pill-on' : 'pill-off'}">${isEnabled ? 'active' : 'disabled'}</span>`}
+      </td>
+      <td class="mono">${prob}</td>
+      <td class="mono" style="font-size:.72rem; color:var(--text-muted);">${escHtml(group || '—')}</td>
+      <td><div class="truncate" title="${escHtml(content)}">${escHtml(content)}</div></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Main convert ───────────────────────────────────────────────────────────
+let lastOutputStr = '';
+let lastTargetFmt = '';
+
+function doConvert(raw) {
+  let parsed;
+  try { parsed = JSON.parse(raw.trim()); }
+  catch(err) {
+    showBadge('error', `Invalid JSON — ${err.message}`);
+    return;
+  }
+
+  const fmt = detectFormat(parsed);
+  if (!fmt) {
+    showBadge('error', 'Could not detect format. Expected ST <code>{"entries":{…}}</code> or JAI <code>[{…}]</code>.');
+    return;
+  }
+
+  const entries = extractEntries(parsed, fmt);
+  if (!entries.length) {
+    showBadge('warn', 'No entries found in the lorebook.');
+    return;
+  }
+
+  const targetFmt = (fmt === 'jai') ? 'st' : 'jai';
+  lastTargetFmt = targetFmt;
+
+  // Convert
+  let converted;
+  if (fmt === 'st' || fmt === 'st-flat') {
+    const arr = entries.map(stToJai);
+    converted = arr;
+    lastOutputStr = JSON.stringify(arr, null, 2);
+  } else {
+    const obj = { entries: {} };
+    entries.forEach((e, i) => { obj.entries[i] = jaiToSt(e, i); });
+    converted = obj;
+    lastOutputStr = JSON.stringify(obj, null, 2);
+  }
+
+  // Warnings
+  const warns = buildWarnings(entries, fmt === 'st-flat' ? 'st' : fmt);
+  const warnBox = document.getElementById('warningsBox');
+  if (warns.length) {
+    warnBox.innerHTML = '<strong>⚠ Conversion notes</strong><ul>' + warns.map(w => `<li>${w}</li>`).join('') + '</ul>';
+    warnBox.classList.add('visible');
+  } else {
+    warnBox.classList.remove('visible');
+  }
+
+  // Badge
+  const fmtLabel = { st:'SillyTavern World Info', 'st-flat':'SillyTavern World Info', jai:'JanitorAI Lorebook' };
+  showBadge('ok', `Detected <strong>${fmtLabel[fmt]}</strong> — ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} → converting to <strong>${fmtLabel[targetFmt]}</strong>`);
+
+  // Results section
+  document.getElementById('entryCount').textContent = entries.length;
+  document.getElementById('sourceFormat').textContent = fmtLabel[fmt];
+  document.getElementById('targetFormat').textContent = fmtLabel[targetFmt];
+  document.getElementById('outputJson').value = lastOutputStr;
+
+  renderTable(entries, fmt === 'st-flat' ? 'st' : fmt);
+
+  const sec = document.getElementById('resultsSection');
+  sec.classList.add('visible', 'fade-in');
+}
+
+function showBadge(type, html) {
+  const badge = document.getElementById('detectionBadge');
+  const dot   = document.getElementById('badgeDot');
+  const text  = document.getElementById('detectionText');
+  dot.className = 'badge-dot' + (type === 'warn' ? ' warn' : type === 'error' ? ' error' : '');
+  text.innerHTML = html;
+  badge.classList.add('visible');
+}
+
+// ── Events ─────────────────────────────────────────────────────────────────
+document.getElementById('convertBtn').addEventListener('click', () => {
+  const val = document.getElementById('pasteInput').value.trim();
+  if (!val) { showBadge('warn', 'Nothing to convert — paste JSON or drop a file first.'); return; }
+  doConvert(val);
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('pasteInput').value = '';
+  document.getElementById('detectionBadge').classList.remove('visible');
+  document.getElementById('warningsBox').classList.remove('visible');
+  document.getElementById('resultsSection').classList.remove('visible', 'fade-in');
+  lastOutputStr = '';
+});
+
+// File input
+const dropZone  = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) readFile(fileInput.files[0]); });
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) readFile(file);
+});
+
+function readFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('pasteInput').value = ev.target.result;
+    doConvert(ev.target.result);
+  };
+  reader.readAsText(file);
+}
+
+// Copy
+document.getElementById('copyBtn').addEventListener('click', () => {
+  if (!lastOutputStr) return;
+  navigator.clipboard.writeText(lastOutputStr).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'copied!';
+    setTimeout(() => { btn.textContent = 'copy'; }, 1800);
+  });
+});
+
+// Download
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!lastOutputStr) return;
+  const name = lastTargetFmt === 'st' ? 'lorebook_st.json' : 'lorebook_jai.json';
+  const blob = new Blob([lastOutputStr], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>
