@@ -15,4 +15,4 @@ You can either download the latest version or use it [here](https://dwenne.githu
 
 
 
--# I know there are other converters out there, but they only handle basic lorebooks afaik (ᵕ—ᴗ—)
+I know there are other converters out there, but they only handle basic lorebooks afaik (ᵕ—ᴗ—)
