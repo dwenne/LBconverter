@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lorebook Converter v2 · ST ↔ JanitorAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0c0a;--bg2:#131210;--bg3:#1a1815;--border:#2e2a23;--border2:#3d3830;--gold:#c9a84c;--gold2:#e8c96a;--gold-dim:#7a6530;--amber:#d4813a;--red:#c0513a;--green:#5a9e6f;--blue:#5a7a9e;--purple:#7a5a9e;--text:#d4cfc4;--text-dim:#8a8070;--text-muted:#55504a}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:17px;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(ellipse 80% 60% at 50% -10%,#2a1f0a22 0%,transparent 60%),radial-gradient(ellipse 40% 30% at 80% 80%,#1a0f0522 0%,transparent 50%);pointer-events:none;z-index:0}
+.page{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:48px 24px 80px}
+header{text-align:center;margin-bottom:48px}
+.rune-line{display:flex;align-items:center;gap:16px;color:var(--gold-dim);font-size:11px;letter-spacing:4px;text-transform:uppercase;margin-bottom:20px}
+.rune-line::before,.rune-line::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,var(--gold-dim),transparent)}
+h1{font-family:'Cinzel',serif;font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;color:var(--gold2);letter-spacing:.04em;line-height:1.15;text-shadow:0 0 40px #c9a84c44;margin-bottom:10px}
+.subtitle{color:var(--text-dim);font-style:italic;font-size:1rem}
+.v-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--gold-dim);border:1px solid var(--gold-dim);border-radius:2px;padding:1px 6px;margin-left:8px;vertical-align:middle}
+.section-label{font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Format pills */
+.format-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.fpill{font-family:'JetBrains Mono',monospace;font-size:.7rem;padding:3px 10px;border-radius:10px;border:1px solid;opacity:.4;transition:opacity .2s,box-shadow .2s}
+.fpill.st{border-color:var(--blue);color:var(--blue)}
+.fpill.jai-json{border-color:var(--green);color:var(--green)}
+.fpill.jai-script{border-color:var(--purple);color:var(--purple)}
+.fpill.active{opacity:1}
+
+/* Drop zone */
+.drop-zone{border:1px dashed var(--border2);border-radius:4px;padding:24px 32px 18px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--bg2);margin-bottom:10px}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--gold-dim);background:#1a1810}
+.drop-zone.drag-over{border-style:solid}
+.drop-icon{font-size:1.5rem;margin-bottom:6px;opacity:.5;display:block}
+.drop-label{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px}
+.drop-sub{font-size:.82rem;color:var(--text-muted);font-style:italic}
+#fileInput{display:none}
+textarea{width:100%;min-height:160px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.74rem;padding:14px;resize:vertical;outline:none;transition:border-color .2s;line-height:1.6}
+textarea:focus{border-color:var(--gold-dim)}
+textarea::placeholder{color:var(--text-muted);font-style:italic}
+
+/* Buttons */
+.btn-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.btn{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid;border-radius:3px;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s;background:transparent}
+.btn-primary{border-color:var(--gold);color:var(--gold2)}
+.btn-primary:hover{background:var(--gold);color:var(--bg);box-shadow:0 0 18px #c9a84c44}
+.btn-secondary{border-color:var(--border2);color:var(--text-dim)}
+.btn-secondary:hover{border-color:var(--text-dim);color:var(--text)}
+
+/* Detection badge */
+#detectionBadge{display:none;align-items:center;gap:10px;margin-top:14px;padding:11px 14px;border:1px solid var(--border);border-radius:3px;background:var(--bg3);font-size:.88rem}
+#detectionBadge.visible{display:flex}
+.badge-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot-warn{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.dot-error{background:var(--red);box-shadow:0 0 6px var(--red)}
+#detectionText{color:var(--text);flex:1;line-height:1.5}
+#detectionText strong{color:var(--gold2);font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.04em}
+
+/* Category mapping panel */
+#categoryPanel{display:none;margin-top:20px;border:1px solid var(--border);border-radius:3px;background:var(--bg3);overflow:hidden}
+#categoryPanel.visible{display:block}
+.catpanel-head{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.catpanel-title{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dim)}
+.catpanel-note{font-size:.8rem;color:var(--text-muted);font-style:italic}
+.cat-grid{padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center}
+.cat-name{font-family:'JetBrains Mono',monospace;font-size:.73rem;color:var(--text-dim);padding-right:12px;word-break:break-all}
+.cat-sel{background:var(--bg2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.72rem;padding:4px 6px;cursor:pointer;outline:none}
+.cat-sel:focus{border-color:var(--gold-dim)}
+.cat-sel option{background:var(--bg2)}
+.outlet-subrow{display:none;grid-column:1/-1;margin-bottom:4px;display:none;align-items:center;gap:8px}
+.outlet-subrow.show{display:flex}
+.outlet-lbl{font-size:.78rem;color:var(--text-muted);white-space:nowrap}
+.outlet-inp{background:var(--bg2);border:1px solid var(--border2);border-radius:2px;color:var(--gold-dim);font-family:'JetBrains Mono',monospace;font-size:.72rem;padding:3px 7px;outline:none;flex:1;min-width:0}
+.outlet-inp:focus{border-color:var(--gold-dim)}
+
+/* Warnings */
+#warningsBox{display:none;margin-top:14px;padding:12px 14px;border:1px solid #7a3a2044;border-left:3px solid var(--amber);border-radius:3px;background:#1a100844;font-size:.86rem;color:var(--text-dim);line-height:1.7}
+#warningsBox.visible{display:block}
+#warningsBox ul{padding-left:16px;margin-top:5px}
+#warningsBox li{margin-bottom:3px}
+#warningsBox strong{color:var(--amber)}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:16px;margin:32px 0;color:var(--text-muted);font-size:.74rem;letter-spacing:.15em;text-transform:uppercase;font-family:'Cinzel',serif}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Results */
+#resultsSection{display:none}
+#resultsSection.visible{display:block}
+.result-meta{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px;align-items:baseline}
+.result-stat{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--text-dim)}
+.result-stat span{color:var(--gold2);font-size:.9rem}
+
+/* Table */
+.table-wrap{overflow-x:auto;margin-bottom:22px;border:1px solid var(--border);border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:.81rem}
+thead tr{background:var(--bg3);border-bottom:1px solid var(--border2)}
+th{text-align:left;padding:9px 11px;font-family:'Cinzel',serif;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dim);font-weight:400;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg3)}
+td{padding:7px 11px;vertical-align:top}
+td.mono{font-family:'JetBrains Mono',monospace;font-size:.71rem;color:var(--text-dim)}
+.tl{display:flex;flex-wrap:wrap;gap:3px}
+.tag{background:#2a2520;border:1px solid var(--border2);border-radius:2px;padding:1px 5px;font-size:.69rem;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.tag.kw{color:var(--gold-dim)}
+.tag.sec{color:var(--text-muted)}
+.tag.tri{color:var(--purple);border-color:#4a3a5e}
+.pill{display:inline-block;padding:1px 7px;border-radius:10px;font-size:.69rem;font-family:'Cinzel',serif}
+.pill-on{background:#1a2e1e;color:var(--green);border:1px solid #2a4a30}
+.pill-off{background:#2a1515;color:var(--red);border:1px solid #3a2020}
+.pill-const{background:#2a220e;color:var(--gold);border:1px solid #3a3015}
+.pos-b{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.64rem;padding:1px 5px;border-radius:2px;border:1px solid}
+.p0{color:#7a9eb5;border-color:#2a4a5a}
+.p1{color:#7ab57a;border-color:#2a5a2a}
+.p7{color:#9e7ab5;border-color:#4a2a7a}
+.px{color:var(--text-muted);border-color:var(--border)}
+.truncate{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Output */
+.out-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#outputJson{min-height:180px;background:#090807;border-color:var(--border2);color:#8fbf8f;font-size:.72rem}
+.copy-btn{font-family:'JetBrains Mono',monospace;font-size:.7rem;padding:4px 11px;border:1px solid var(--border2);border-radius:2px;background:transparent;color:var(--text-muted);cursor:pointer;transition:color .15s,border-color .15s}
+.copy-btn:hover{color:var(--gold2);border-color:var(--gold-dim)}
+
+/* Field map ref */
+.fm{display:grid;grid-template-columns:1fr auto 1fr;gap:5px 4px;font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:13px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;margin-top:10px}
+.fm-l{color:var(--text-dim);text-align:right}
+.fm-a{color:var(--gold-dim);text-align:center}
+.fm-r{color:var(--text-dim)}
+.fm-n{grid-column:1/-1;color:var(--text-muted);font-size:.7rem;margin-top:1px;font-family:'Crimson Pro',serif}
+.fm-h{grid-column:1/-1;color:var(--gold-dim);font-family:'Cinzel',serif;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:2px}
+details summary{cursor:pointer;color:var(--text-dim);font-size:.84rem;list-style:none;display:flex;align-items:center;gap:8px}
+details summary::before{content:'▸';color:var(--gold-dim);font-size:.68rem;transition:transform .2s}
+details[open] summary::before{transform:rotate(90deg)}
+details summary::-webkit-details-marker{display:none}
+footer{margin-top:56px;text-align:center;font-size:.8rem;color:var(--text-muted);font-style:italic}
+footer a{color:var(--gold-dim);text-decoration:none}
+footer a:hover{color:var(--gold2)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn .3s ease forwards}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="rune-line">Tome Alchemy</div>
+  <h1>Lorebook Converter <span class="v-badge">v2</span></h1>
+  <p class="subtitle">SillyTavern World Info &nbsp;⇄&nbsp; JanitorAI Lorebook &amp; Advanced Scripts</p>
+</header>
+
+<!-- INPUT -->
+<div class="section-label">Import</div>
+<div class="format-pills">
+  <span class="fpill st"    id="pill-st">ST World Info JSON</span>
+  <span class="fpill jai-json" id="pill-jai">JAI Lorebook JSON</span>
+  <span class="fpill jai-script" id="pill-script">JAI Advanced Script</span>
+</div>
+
+<div class="drop-zone" id="dropZone" role="button" tabindex="0">
+  <span class="drop-icon">📖</span>
+  <div class="drop-label">Drop any lorebook file here</div>
+  <div class="drop-sub">ST JSON · JAI JSON · JAI Advanced Script (.txt, .js, .json)</div>
+</div>
+<input type="file" id="fileInput" accept=".json,.js,.txt">
+
+<textarea id="pasteInput" placeholder='Paste any format here:
+• ST World Info  →  {"entries":{"0":{…}}}
+• JAI JSON       →  [{…},{…}]
+• JAI Script     →  const loreEntries = [{…}]'></textarea>
+
+<div id="detectionBadge"><div class="badge-dot" id="badgeDot"></div><div id="detectionText"></div></div>
+
+<!-- CATEGORY MAPPING — appears after advanced script is detected -->
+<div id="categoryPanel">
+  <div class="catpanel-head">
+    <span class="catpanel-title">Category → ST Position mapping</span>
+    <span class="catpanel-note">Adjust insertion point per category, then convert</span>
+  </div>
+  <div class="cat-grid" id="catGrid"></div>
+</div>
+
+<div class="btn-row" style="margin-top:18px">
+  <button class="btn btn-primary" id="convertBtn">Convert ⟶</button>
+  <button class="btn btn-secondary" id="clearBtn">Clear</button>
+</div>
+
+<div id="warningsBox"></div>
+
+<!-- FIELD MAP REFERENCE -->
+<details style="margin-top:22px">
+  <summary>Field mapping reference</summary>
+  <div class="fm" style="margin-top:10px">
+    <div class="fm-h">Advanced Script → ST (v2)</div>
+    <div class="fm-l">keywords</div><div class="fm-a">→</div><div class="fm-r">key</div>
+    <div class="fm-l">priority × 10</div><div class="fm-a">→</div><div class="fm-r">order</div>
+    <div class="fm-l">minMessages</div><div class="fm-a">→</div><div class="fm-r">delay</div>
+    <div class="fm-l">probability × 100</div><div class="fm-a">→</div><div class="fm-r">probability (0–100)</div>
+    <div class="fm-l">personality + scenario</div><div class="fm-a">→</div><div class="fm-r">content (labelled)</div>
+    <div class="fm-l">category</div><div class="fm-a">→</div><div class="fm-r">position (via mapping panel)</div>
+    <div class="fm-l">triggers[ ]</div><div class="fm-a">→</div><div class="fm-r">appended to content — ST recursive scan picks them up</div>
+    <div class="fm-l">filters.notWith</div><div class="fm-a">→</div><div class="fm-r">keysecondary + NOT ANY (2)</div>
+    <div class="fm-l">filters.requiresAny</div><div class="fm-a">→</div><div class="fm-r">keysecondary + AND ANY (0)</div>
+    <div class="fm-l">filters.requiresAll</div><div class="fm-a">→</div><div class="fm-r">keysecondary + AND ALL (1)</div>
+    <div class="fm-h" style="margin-top:7px">ST ↔ JAI JSON</div>
+    <div class="fm-l">key / disable / delay</div><div class="fm-a">⇄</div><div class="fm-r">keys / enabled / minMessages</div>
+    <div class="fm-n">ST positions: 0 = Before Char Defs (lore) · 1 = After Char Defs (locations, NPCs) · 7 = Outlet (knowledge injections)</div>
+  </div>
+</details>
+
+<div class="divider">Results</div>
+
+<div id="resultsSection">
+  <div class="result-meta">
+    <div class="result-stat">Entries: <span id="entryCount">—</span></div>
+    <div class="result-stat">Source: <span id="srcFmt">—</span></div>
+    <div class="result-stat">Output: <span id="tgtFmt">—</span></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Category / Name</th><th>Keywords</th>
+        <th>Secondary / Filter</th><th>Triggers</th>
+        <th>Pos</th><th>Order</th><th>Prob%</th><th>Status</th>
+      </tr></thead>
+      <tbody id="tBody"></tbody>
+    </table>
+  </div>
+
+  <div class="out-head">
+    <div class="section-label" style="margin:0;flex:1">Output JSON</div>
+    <button class="copy-btn" id="copyBtn">copy</button>
+  </div>
+  <textarea id="outputJson" readonly spellcheck="false"></textarea>
+  <div class="btn-row" style="margin-top:13px">
+    <button class="btn btn-primary" id="downloadBtn">Download JSON</button>
+  </div>
+</div>
+
+<footer>
+  <p>All processing is local — nothing leaves your browser.</p>
+  <p style="margin-top:5px">
+    <a href="https://docs.sillytavern.app/usage/core-concepts/worldinfo/" target="_blank">ST Docs</a>
+    &nbsp;·&nbsp;
+    <a href="https://help.janitorai.com/en/category/scripts-1qzakwc/" target="_blank">JAI Scripts</a>
+  </p>
+</footer>
+
+</div>
+<script>
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+const POSITIONS = {0:'Before Char Defs',1:'After Char Defs',2:'Before Example Msgs',3:'After Example Msgs',4:'Top of AN',5:'Bottom of AN',6:'@ Depth',7:'Outlet'};
+
+// ═══════════════════════════════════════
+// FORMAT DETECTION
+// ═══════════════════════════════════════
+function detectFormat(text) {
+  const t = text.trim();
+  if (t.startsWith('{') || t.startsWith('[')) {
+    try {
+      const p = JSON.parse(t);
+      if (Array.isArray(p) && p.length > 0 && ('keys' in p[0] || ('content' in p[0] && !('uid' in p[0])))) return {type:'jai_json', parsed:p};
+      if (p && p.entries && typeof p.entries === 'object' && !Array.isArray(p.entries)) return {type:'st_json', parsed:p};
+      const ks = Object.keys(p);
+      if (ks.length && ks.every(k => !isNaN(parseInt(k)))) return {type:'st_json', parsed:{entries:p}};
+    } catch(e) {}
+  }
+  if (/loreEntries\s*=\s*\[/.test(t)) return {type:'jai_script', parsed:null};
+  return null;
+}
+
+// ═══════════════════════════════════════
+// JS SCRIPT PARSER
+// Extracts and evaluates the loreEntries array literal
+// ═══════════════════════════════════════
+function parseScript(code) {
+  const startIdx = code.indexOf('loreEntries');
+  if (startIdx === -1) throw new Error('loreEntries not found');
+  const arrStart = code.indexOf('[', code.indexOf('=', startIdx));
+  if (arrStart === -1) throw new Error('Array not found');
+  let depth = 0, i = arrStart, end = -1;
+  while (i < code.length) {
+    if (code[i] === '[') depth++;
+    else if (code[i] === ']') { depth--; if (depth === 0) { end = i; break; } }
+    i++;
+  }
+  if (end === -1) throw new Error('Unclosed array bracket');
+  const arrStr = code.slice(arrStart, end + 1);
+  try {
+    // eslint-disable-next-line no-new-func
+    const result = new Function('"use strict"; return (' + arrStr + ')')();
+    if (!Array.isArray(result)) throw new Error('Not an array');
+    return result;
+  } catch(e) {
+    throw new Error('Evaluation failed: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════
+// SMART POSITION DEFAULTS
+// ═══════════════════════════════════════
+function smartPos(category) {
+  const c = (category || '').toLowerCase().replace(/[_-]/g,' ');
+  if (/\bnpc\b|character/.test(c)) return 1;
+  if (/location|place|campus|dorm|building|region/.test(c)) return 1;
+  return 0;
+}
+
+function posCls(pos) {
+  return pos === 0 ? 'p0' : pos === 1 ? 'p1' : pos === 7 ? 'p7' : 'px';
+}
+
+function sanitizeOutlet(cat) {
+  return (cat || 'lore').replace(/[^a-zA-Z0-9]/g,'_').slice(0,28);
+}
+
+// ═══════════════════════════════════════
+// CATEGORY MAPPING PANEL
+// ═══════════════════════════════════════
+function buildCatPanel(entries) {
+  const cats = [...new Set(entries.map(e => e.category || ''))].sort();
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = '';
+  cats.forEach(cat => {
+    const def = smartPos(cat);
+    const nameEl = document.createElement('div');
+    nameEl.className = 'cat-name';
+    nameEl.textContent = cat || '(none)';
+    const sel = document.createElement('select');
+    sel.className = 'cat-sel';
+    sel.dataset.cat = cat;
+    Object.entries(POSITIONS).forEach(([v,lbl]) => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v + ' — ' + lbl;
+      if (parseInt(v) === def) o.selected = true;
+      sel.appendChild(o);
+    });
+    const outRow = document.createElement('div');
+    outRow.className = 'outlet-subrow' + (def === 7 ? ' show' : '');
+    outRow.innerHTML = '<span class="outlet-lbl">Outlet name:</span><input class="outlet-inp" data-cat="' + escHtml(cat) + '" value="' + sanitizeOutlet(cat) + '" placeholder="outlet_name">';
+    sel.addEventListener('change', () => outRow.classList.toggle('show', parseInt(sel.value) === 7));
+    grid.appendChild(nameEl);
+    grid.appendChild(sel);
+    grid.appendChild(outRow);
+  });
+  document.getElementById('categoryPanel').classList.add('visible');
+}
+
+function getCatMap() {
+  const m = {};
+  document.querySelectorAll('.cat-sel').forEach(s => { m[s.dataset.cat] = parseInt(s.value); });
+  return m;
+}
+
+function getOutletMap() {
+  const m = {};
+  document.querySelectorAll('.outlet-inp').forEach(i => { m[i.dataset.cat] = i.value.trim() || sanitizeOutlet(i.dataset.cat); });
+  return m;
+}
+
+// ═══════════════════════════════════════
+// ADVANCED SCRIPT → ST ENTRY
+// ═══════════════════════════════════════
+function scriptToST(e, uid, catMap, outletMap) {
+  const pos = catMap[e.category] ?? smartPos(e.category);
+  const parts = [];
+  if (e.personality) parts.push('[PERSONALITY]: ' + e.personality.trim());
+  if (e.scenario)    parts.push('[SCENARIO]: ' + e.scenario.trim());
+  if (e.triggers && e.triggers.length) parts.push('[RECURSIVE TRIGGERS]: ' + e.triggers.join(', '));
+  const content = parts.join('\n\n');
+  let keysecondary = [], selectiveLogic = 0, selective = false;
+  if (e.filters) {
+    if (e.filters.notWith && e.filters.notWith.length) { keysecondary = e.filters.notWith; selectiveLogic = 2; selective = true; }
+    else if (e.filters.requiresAll && e.filters.requiresAll.length) { keysecondary = e.filters.requiresAll; selectiveLogic = 1; selective = true; }
+    else if (e.filters.requiresAny && e.filters.requiresAny.length) { keysecondary = e.filters.requiresAny; selectiveLogic = 0; selective = true; }
+  }
+  const outletName = pos === 7 ? (outletMap[e.category] || sanitizeOutlet(e.category)) : '';
+  const prob = e.probability != null ? Math.min(100, Math.round(e.probability * 100)) : 100;
+  return {
+    uid, key: Array.isArray(e.keywords) ? e.keywords : [],
+    keysecondary, comment: e.category || '', content,
+    constant: false, vectorized: false,
+    selective, selectiveLogic, addMemo: true,
+    order: (e.priority ?? 5) * 10, position: pos,
+    disable: false, ignoreBudget: false,
+    excludeRecursion: false, preventRecursion: false,
+    matchPersonaDescription: false, matchCharacterDescription: false,
+    matchCharacterPersonality: false, matchCharacterDepthPrompt: false,
+    matchScenario: false, matchCreatorNotes: false,
+    delayUntilRecursion: false, probability: prob, useProbability: true,
+    depth: 4, outletName, group: e.category || '',
+    groupOverride: false, groupWeight: 100,
+    scanDepth: null, caseSensitive: null, matchWholeWords: null,
+    useGroupScoring: null, automationId: '', role: 0,
+    sticky: 0, cooldown: 0, delay: e.minMessages ?? 0,
+    triggers: [], displayIndex: uid,
+    characterFilter: {isExclude: false, names: [], tags: []}
+  };
+}
+
+// ═══════════════════════════════════════
+// ST ↔ JAI JSON
+// ═══════════════════════════════════════
+function stToJai(e) {
+  return {
+    keys: Array.isArray(e.key) ? e.key : (e.key ? [e.key] : []),
+    keysecondary: Array.isArray(e.keysecondary) ? e.keysecondary : [],
+    comment: e.comment || '', content: e.content || '',
+    enabled: !e.disable, constant: !!e.constant,
+    probability: e.useProbability === false ? 100 : (e.probability ?? 100),
+    order: e.order ?? 100, group: e.group || '',
+    groupWeight: e.groupWeight ?? 100, groupOverride: !!e.groupOverride,
+    useGroupScoring: e.useGroupScoring ?? false,
+    selective: e.selective ?? true, selectiveLogic: e.selectiveLogic ?? 0,
+    minMessages: e.delay ?? 0,
+    caseSensitive: e.caseSensitive ?? false,
+    matchWholeWords: e.matchWholeWords ?? true
+  };
+}
+
+function jaiToSt(e, uid) {
+  return {
+    uid, key: Array.isArray(e.keys) ? e.keys : (e.keys ? [e.keys] : []),
+    keysecondary: Array.isArray(e.keysecondary) ? e.keysecondary : [],
+    comment: e.comment || '', content: e.content || '',
+    constant: !!e.constant, vectorized: false,
+    selective: e.selective ?? true, selectiveLogic: e.selectiveLogic ?? 0,
+    addMemo: true, order: e.order ?? 100, position: 4,
+    disable: e.enabled === false, ignoreBudget: false,
+    excludeRecursion: false, preventRecursion: false,
+    matchPersonaDescription: false, matchCharacterDescription: false,
+    matchCharacterPersonality: false, matchCharacterDepthPrompt: false,
+    matchScenario: false, matchCreatorNotes: false,
+    delayUntilRecursion: false,
+    probability: e.probability ?? 100, useProbability: true,
+    depth: 4, outletName: '', group: e.group || '',
+    groupOverride: !!e.groupOverride, groupWeight: e.groupWeight ?? 100,
+    scanDepth: null, caseSensitive: e.caseSensitive ?? null,
+    matchWholeWords: e.matchWholeWords ?? null,
+    useGroupScoring: e.useGroupScoring ?? null,
+    automationId: '', role: 0, sticky: 0, cooldown: 0,
+    delay: e.minMessages ?? 0, triggers: [], displayIndex: uid,
+    characterFilter: {isExclude: false, names: [], tags: []}
+  };
+}
+
+// ═══════════════════════════════════════
+// WARNINGS
+// ═══════════════════════════════════════
+function buildWarnings(entries, fmt) {
+  const w = [];
+  if (fmt === 'st') {
+    const pos = entries.filter(e => e.position !== undefined && e.position !== 4);
+    if (pos.length) w.push('<strong>' + pos.length + ' entries</strong> use non-default ST positions — dropped in JAI (no positional equivalent).');
+    const sticky = entries.filter(e => e.sticky > 0);
+    if (sticky.length) w.push('<strong>' + sticky.length + ' entries</strong> use Sticky — dropped.');
+    const autos = entries.filter(e => e.automationId);
+    if (autos.length) w.push('<strong>' + autos.length + ' entries</strong> have Automation IDs — dropped.');
+    const vect = entries.filter(e => e.vectorized);
+    if (vect.length) w.push('<strong>' + vect.length + ' entries</strong> are Vectorized — JAI uses keyword matching only.');
+    const cf = entries.filter(e => e.characterFilter && (e.characterFilter.names?.length || e.characterFilter.tags?.length));
+    if (cf.length) w.push('<strong>' + cf.length + ' entries</strong> have Character Filters — will apply globally in JAI.');
+  } else if (fmt === 'jai') {
+    w.push('JAI → ST: insertion <strong>position</strong> set to Top of AN (4) for all entries. Adjust as needed in ST.');
+  } else if (fmt === 'jai_script') {
+    w.push('Trigger chains appended to content as <code>[RECURSIVE TRIGGERS]</code>. Enable <strong>recursive lorebook scanning</strong> in ST World Info settings to activate them automatically.');
+    const hasOutlet = entries.filter(e => (getCatMap()[e.category] ?? smartPos(e.category)) === 7);
+    if (hasOutlet.length) w.push('<strong>' + hasOutlet.length + ' entries</strong> mapped to Outlet (position 7) — add <code>{{outlet:name}}</code> macros to the character card at the correct insertion points.');
+    const filtered = entries.filter(e => e.filters && Object.keys(e.filters).length > 0);
+    if (filtered.length) w.push('<strong>' + filtered.length + ' entries</strong> use filters — mapped to ST secondary keys with matching selective logic (notWith→NOT ANY, requiresAny→AND ANY, requiresAll→AND ALL).');
+    w.push('Probability values (0–1 in JAI) multiplied by 100 for ST.');
+  }
+  return w;
+}
+
+// ═══════════════════════════════════════
+// TABLE RENDER
+// ═══════════════════════════════════════
+function tags(arr, cls) {
+  if (!arr || !arr.length) return '';
+  const visible = arr.slice(0,4);
+  const rest    = arr.length - visible.length;
+  return visible.map(k => '<span class="tag ' + cls + '">' + escHtml(k) + '</span>').join('')
+       + (rest > 0 ? '<span class="tag ' + cls + '">+' + rest + '</span>' : '');
+}
+
+function renderTable(rawEntries, fmt) {
+  const tbody = document.getElementById('tBody');
+  tbody.innerHTML = '';
+  const catMap = fmt === 'jai_script' ? getCatMap() : {};
+  rawEntries.forEach((e, i) => {
+    let keys, sec, label, enabled, isConst, prob, content, pos, order, trig, filterNote;
+    if (fmt === 'st') {
+      keys = Array.isArray(e.key) ? e.key : [e.key||''];
+      sec = Array.isArray(e.keysecondary) ? e.keysecondary : [];
+      label = e.comment||'—'; enabled = !e.disable; isConst = !!e.constant;
+      prob = e.probability??100; content = e.content||'';
+      pos = e.position??4; order = e.order??100; trig = []; filterNote = '';
+    } else if (fmt === 'jai') {
+      keys = Array.isArray(e.keys) ? e.keys : [e.keys||''];
+      sec = Array.isArray(e.keysecondary) ? e.keysecondary : [];
+      label = e.comment||'—'; enabled = e.enabled!==false; isConst = !!e.constant;
+      prob = e.probability??100; content = e.content||'';
+      pos = null; order = e.order??100; trig = []; filterNote = '';
+    } else {
+      keys = Array.isArray(e.keywords) ? e.keywords : [];
+      sec = e.filters?.notWith || e.filters?.requiresAny || e.filters?.requiresAll || [];
+      filterNote = e.filters?.notWith ? ' <span style="color:var(--red);font-size:.63rem">NOT ANY</span>'
+                 : e.filters?.requiresAll ? ' <span style="color:var(--blue);font-size:.63rem">AND ALL</span>'
+                 : e.filters?.requiresAny ? ' <span style="color:var(--green);font-size:.63rem">AND ANY</span>'
+                 : '';
+      label = e.category||'—'; enabled = true; isConst = false;
+      prob = e.probability != null ? Math.round(e.probability*100) : 100;
+      content = [e.personality||'',e.scenario||''].filter(Boolean).join(' | ');
+      pos = catMap[e.category] ?? smartPos(e.category);
+      order = (e.priority??5)*10;
+      trig = Array.isArray(e.triggers) ? e.triggers : [];
+    }
+    const posBadge = pos !== null
+      ? '<span class="pos-b ' + posCls(pos) + '">' + pos + '</span>'
+      : '—';
+    const statusBadge = isConst ? '<span class="pill pill-const">const</span>'
+      : '<span class="pill ' + (enabled?'pill-on':'pill-off') + '">' + (enabled?'on':'off') + '</span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="mono">' + i + '</td>'
+      + '<td>' + escHtml(label) + '</td>'
+      + '<td><div class="tl">' + tags(keys,'kw') + '</div></td>'
+      + '<td><div class="tl">' + tags(sec,'sec') + filterNote + '</div></td>'
+      + '<td><div class="tl">' + tags(trig,'tri') + '</div></td>'
+      + '<td>' + posBadge + '</td>'
+      + '<td class="mono">' + order + '</td>'
+      + '<td class="mono">' + prob + '</td>'
+      + '<td>' + statusBadge + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// ═══════════════════════════════════════
+// MAIN CONVERT FLOW
+// ═══════════════════════════════════════
+let lastOut = '', lastTargetFmt = '', pendingScriptEntries = null;
+
+function doConvert(rawText) {
+  const det = detectFormat(rawText);
+  if (!det) { showBadge('error','Cannot detect format. Expected ST JSON, JAI JSON array, or a JAI Advanced Script.'); return; }
+
+  const LABELS = {'st_json':'SillyTavern World Info','jai_json':'JAI Lorebook JSON','jai_script':'JAI Advanced Script'};
+  updatePills(det.type);
+
+  // ── JAI ADVANCED SCRIPT ──
+  if (det.type === 'jai_script') {
+    let entries;
+    try { entries = parseScript(rawText); }
+    catch(e) { showBadge('error','Script parse failed: ' + e.message); return; }
+    if (!entries.length) { showBadge('warn','No entries found in loreEntries array.'); return; }
+    pendingScriptEntries = entries;
+    buildCatPanel(entries);
+    showBadge('ok','Detected <strong>' + LABELS['jai_script'] + '</strong> — ' + entries.length + ' entr' + (entries.length===1?'y':'ies') + ' found. Set positions in the panel below, then click Convert again.');
+    // Re-wire Convert button to finalize with chosen mapping
+    document.getElementById('convertBtn').onclick = () => finalizeScript(pendingScriptEntries, LABELS);
+    return;
+  }
+
+  // ── ST JSON → JAI ──
+  if (det.type === 'st_json') {
+    const raw = Object.values(det.parsed.entries);
+    if (!raw.length) { showBadge('warn','No entries found.'); return; }
+    const converted = raw.map(stToJai);
+    lastOut = JSON.stringify(converted, null, 2); lastTargetFmt = 'jai';
+    showWarnings(buildWarnings(raw,'st'));
+    showBadge('ok','Detected <strong>' + LABELS['st_json'] + '</strong> — ' + raw.length + ' entr' + (raw.length===1?'y':'ies') + ' → <strong>JAI Lorebook JSON</strong>');
+    populate(raw, 'st', LABELS['st_json'], 'JAI Lorebook JSON');
+    renderTable(raw,'st');
+    return;
+  }
+
+  // ── JAI JSON → ST ──
+  if (det.type === 'jai_json') {
+    const raw = det.parsed;
+    if (!raw.length) { showBadge('warn','No entries found.'); return; }
+    const obj = {entries:{}};
+    raw.forEach((e,i) => { obj.entries[i] = jaiToSt(e,i); });
+    lastOut = JSON.stringify(obj, null, 2); lastTargetFmt = 'st';
+    showWarnings(buildWarnings(raw,'jai'));
+    showBadge('ok','Detected <strong>' + LABELS['jai_json'] + '</strong> — ' + raw.length + ' entr' + (raw.length===1?'y':'ies') + ' → <strong>ST World Info</strong>');
+    populate(raw,'jai',LABELS['jai_json'],'SillyTavern World Info');
+    renderTable(raw,'jai');
+    return;
+  }
+}
+
+function finalizeScript(entries, LABELS) {
+  const catMap = getCatMap(), outletMap = getOutletMap();
+  const obj = {entries:{}};
+  entries.forEach((e,i) => { obj.entries[i] = scriptToST(e, i, catMap, outletMap); });
+  lastOut = JSON.stringify(obj, null, 2); lastTargetFmt = 'st';
+  showWarnings(buildWarnings(entries,'jai_script'));
+  populate(entries,'jai_script','JAI Advanced Script','SillyTavern World Info');
+  renderTable(entries,'jai_script');
+}
+
+function populate(raw, fmt, src, tgt) {
+  document.getElementById('entryCount').textContent = raw.length;
+  document.getElementById('srcFmt').textContent = src;
+  document.getElementById('tgtFmt').textContent = tgt;
+  document.getElementById('outputJson').value = lastOut;
+  document.getElementById('resultsSection').classList.add('visible','fade-in');
+}
+
+// ═══════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════
+function showBadge(type, html) {
+  const badge = document.getElementById('detectionBadge');
+  document.getElementById('badgeDot').className = 'badge-dot dot-' + type;
+  document.getElementById('detectionText').innerHTML = html;
+  badge.classList.add('visible');
+}
+
+function showWarnings(warns) {
+  const box = document.getElementById('warningsBox');
+  if (warns.length) {
+    box.innerHTML = '<strong>⚠ Conversion notes</strong><ul>' + warns.map(w=>'<li>'+w+'</li>').join('') + '</ul>';
+    box.classList.add('visible');
+  } else box.classList.remove('visible');
+}
+
+function updatePills(type) {
+  document.querySelectorAll('.fpill').forEach(p=>p.classList.remove('active'));
+  const m = {'st_json':'pill-st','jai_json':'pill-jai','jai_script':'pill-script'};
+  if (m[type]) document.getElementById(m[type]).classList.add('active');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════
+// EVENT WIRING
+// ═══════════════════════════════════════
+const pasteInput = document.getElementById('pasteInput');
+const dropZone   = document.getElementById('dropZone');
+const fileInput  = document.getElementById('fileInput');
+
+pasteInput.addEventListener('input', () => {
+  const v = pasteInput.value.trim();
+  if (v) { const d = detectFormat(v); if (d) updatePills(d.type); }
+});
+
+document.getElementById('convertBtn').addEventListener('click', function() {
+  const v = pasteInput.value.trim();
+  if (!v) { showBadge('warn','Nothing to convert — paste or drop a file first.'); return; }
+  // If not overridden by script mode, reset onclick and run normal flow
+  if (!pendingScriptEntries || detectFormat(v)?.type !== 'jai_script') {
+    this.onclick = null;
+    pendingScriptEntries = null;
+    doConvert(v);
+  } else {
+    // Already in script mode — this fires the overridden handler
+    doConvert(v);
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  pasteInput.value = '';
+  ['detectionBadge','warningsBox','resultsSection','categoryPanel'].forEach(id => {
+    document.getElementById(id).classList.remove('visible','fade-in');
+  });
+  document.querySelectorAll('.fpill').forEach(p=>p.classList.remove('active'));
+  document.getElementById('convertBtn').onclick = null;
+  pendingScriptEntries = null;
+  lastOut = '';
+});
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') fileInput.click(); });
+fileInput.addEventListener('change', () => { if(fileInput.files[0]) readFile(fileInput.files[0]); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+});
+
+function readFile(file) {
+  const r = new FileReader();
+  r.onload = ev => { pasteInput.value = ev.target.result; doConvert(ev.target.result); };
+  r.readAsText(file);
+}
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  if(!lastOut) return;
+  navigator.clipboard.writeText(lastOut).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent='copied!';
+    setTimeout(()=>{btn.textContent='copy';},1800);
+  });
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if(!lastOut) return;
+  const name = lastTargetFmt==='st' ? 'lorebook_st.json' : 'lorebook_jai.json';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lastOut],{type:'application/json'}));
+  a.download = name; a.click();
+});
+</script>
+</body>
+</html>
