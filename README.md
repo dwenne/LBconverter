@@ -14,5 +14,5 @@ ST export is basic JAI format only. No script generation.
 You can either download the latest version or use it [here](https://dwenne.github.io/LBconverter/lorebook-converter-v6.html) or [here](https://drevaine.neocities.org/lbconverter).
 
 
-
+----
 I know there are other converters out there, but they only handle basic lorebooks afaik (ᵕ—ᴗ—)
