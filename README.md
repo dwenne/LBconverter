@@ -12,5 +12,4 @@ ST export is basic JAI format only. No script generation.
 ## Usage
 
 Download the latest version and open it in your browser, or use the hosted mobile-friendly version:
-- [Neocities](https://drevaine.neocities.org/lbconverter)
 - [GitHub Pages](https://dwenne.github.io/LBconverter)
