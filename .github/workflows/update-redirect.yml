@@ -4,6 +4,10 @@ on:
   push:
     paths:
       - 'lorebook-converter-v*.html'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   update-index:
