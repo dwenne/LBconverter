@@ -1,6 +1,250 @@
-<!DOCTYPE html>
-<html><head><meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=lorebook-converter-v7-4.html">
-<title>Redirecting...</title></head>
-<body><script>window.location.replace("lorebook-converter-v7-4.html");<\/script></body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lorebook Converter v7.4</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+    <button class="lang-toggle" id="langToggle">RU</button>
+    <div class="page">
+      <header>
+        <div class="rune-line" data-i18n="runeLine">Tome Alchemy</div>
+        <h1>
+          <span data-i18n="title">Lorebook Converter</span>
+          <span class="v-badge">v7.4</span>
+        </h1>
+        <p class="subtitle" data-i18n="subtitle">
+          SillyTavern World Info &nbsp;⇄&nbsp; JanitorAI Lorebook &amp; Scripts
+        </p>
+        <div class="mode-toggle" role="tablist">
+          <button class="mode-btn active" id="modeSimpleBtn" data-i18n="modeSimple" role="tab" aria-selected="true">Simple</button>
+          <button class="mode-btn" id="modeAdvancedBtn" data-i18n="modeAdvanced" role="tab" aria-selected="false">Advanced</button>
+        </div>
+        <div class="mode-hint" id="modeHint">
+          Simple mode: drop your file, hit Convert, download. Switch to Advanced for category positions, prefixes, and the raw JSON.
+        </div>
+      </header>
+
+      <div class="section-label" data-i18n="importLabel">Import</div>
+      <div class="fpills">
+        <span class="fpill st" id="pill-st" tabindex="0" role="button" data-i18n="pillSt" data-i18n-title="pillTitle" title="Click to load a tiny example of this format">ST World Info JSON</span>
+        <span class="fpill jai" id="pill-jai" tabindex="0" role="button" data-i18n="pillJai" data-i18n-title="pillTitle" title="Click to load a tiny example of this format">JAI Lorebook JSON</span>
+        <span class="fpill js" id="pill-js" tabindex="0" role="button" data-i18n="pillJs" data-i18n-title="pillTitle" title="Click to load a tiny example of this format">loreEntries Script</span>
+        <span class="fpill chain" id="pill-chain" tabindex="0" role="button" data-i18n="pillChain" data-i18n-title="pillTitle" title="Click to load a tiny example of this format">if-chain Script</span>
+      </div>
+      <div class="fpills-hint" data-i18n="pillsHint">Not sure which format you have? Click a pill above to see a sample.</div>
+
+      <div class="drop-zone" id="dropZone" role="button" tabindex="0">
+        <span class="drop-icon">📖</span>
+        <div class="drop-label" data-i18n="dropLabel">Drop any lorebook file here</div>
+        <div class="drop-sub" data-i18n="dropSub">ST JSON · JAI JSON · scripts (.txt .js .json .docx)</div>
+        <div class="drop-loaded" id="dropLoaded"></div>
+      </div>
+      <input type="file" id="fileInput" accept=".json,.js,.txt,.docx" />
+
+      <textarea id="pasteInput" data-i18n-ph="pasteInputPh" placeholder='Paste any format here...'></textarea>
+
+      <div class="name-row">
+        <div class="name-group">
+          <label class="name-label" for="lbName" data-i18n="lbNameLabel">Lorebook name</label>
+          <input class="name-input" id="lbName" type="text" data-i18n-ph="lbNamePh" placeholder="e.g. My Lorebook (used as filename)" />
+        </div>
+        <div class="name-group advanced-only" id="outletGroup">
+          <label class="name-label" for="outletName">
+            <span data-i18n="outletNameLabel">Outlet name</span>
+            <span data-i18n="outletNameSub" style="color: var(--text-muted); font-family: 'Crimson Pro', serif; font-size: 0.78rem; text-transform: none; letter-spacing: 0; font-weight: 400;">(for personality entries)</span>
+          </label>
+          <input class="name-input" id="outletName" type="text" data-i18n-ph="outletNamePh" placeholder="e.g. char_knowledge" data-i18n-title="outletNameTitle" />
+        </div>
+      </div>
+
+      <div id="detectionBadge">
+        <div class="badge-dot" id="badgeDot"></div>
+        <div id="detectionText"></div>
+      </div>
+
+      <div id="catPanel" class="advanced-only">
+        <div class="cphead">
+          <span class="cptitle" data-i18n="catTitle">Entry positions by category</span>
+          <span class="cpnote" data-i18n="catNote">Personality defaults to 7 / Outlet</span>
+        </div>
+        <div class="cat-grid" id="catGrid">
+          <div class="cg-head" data-i18n="cgCategory">Category</div>
+          <div class="cg-head" data-i18n="cgScenarioPos">Scenario Pos</div>
+          <div class="cg-head" id="persPosHead" data-i18n="cgPersonalityPos">Personality Pos</div>
+        </div>
+        <div class="cphead" style="border-top: 1px solid var(--border); margin-top: 6px">
+          <span class="cptitle" data-i18n="advTitle">Advanced Script Settings</span>
+        </div>
+        <div class="opts-box">
+          <label class="check-lbl" data-i18n-title="mergeTitle">
+            <input type="checkbox" id="mergePairsCheck" />
+            <span data-i18n="mergeLabel">Merge Scenario & Personality into a single entry (uses Scenario position)</span>
+          </label>
+          <div class="name-row" style="margin-top: 0">
+            <div class="name-group">
+              <label class="name-label" style="font-size: 0.6rem">
+                <span data-i18n="scenPrefixLabel">Scenario text prefix</span>
+                <span style="text-transform: none; color: var(--text-muted)" data-i18n="prefixNewlineNote">(use \n for newline)</span>
+              </label>
+              <input class="name-input" id="scenPrefix" type="text" data-i18n-ph="scenPrefixPh" placeholder="e.g. [Scenario]\n" />
+            </div>
+            <div class="name-group">
+              <label class="name-label" style="font-size: 0.6rem" data-i18n="persPrefixLabel">Personality text prefix</label>
+              <input class="name-input" id="persPrefix" type="text" data-i18n-ph="persPrefixPh" placeholder="e.g. [Personality]\n" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="convertBtn" data-i18n="convertBtn">Convert ⟶</button>
+        <button class="btn btn-secondary" id="clearBtn" data-i18n="clearBtn">Clear</button>
+      </div>
+
+      <div id="warningsBox"></div>
+
+      <details style="margin-top: 20px" class="advanced-only">
+        <summary data-i18n="fieldMapSummary">Field mapping reference</summary>
+        <div class="fm">
+          <div class="fm-h" data-i18n="fmScriptsSt">Scripts → ST</div>
+          <div class="fm-l" data-i18n="fmEntry">entry</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r" data-i18n="fmEntryVal">up to 2 ST entries (or 1 merged)</div>
+          <div class="fm-l" data-i18n="fmScenText">scenario text</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r" data-i18n="fmScenTextVal">content, mapped position (default 0 or 1)</div>
+          <div class="fm-l" data-i18n="fmPersText">personality text</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r" data-i18n="fmPersTextVal">content, position 7 / Outlet (default)</div>
+          <div class="fm-l">keywords / includes()</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r" data-i18n="fmKeywordsVal">key (shared)</div>
+          <div class="fm-l" data-i18n="fmPriority">priority × 10</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r" data-i18n="fmOrder">order</div>
+          <div class="fm-l">minMessages / message_count</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r" data-i18n="fmDelay">delay</div>
+          <div class="fm-l">filters.notWith</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r" data-i18n="fmNotWith">keysecondary + NOT ANY (2)</div>
+          <div class="fm-l">filters.requiresAny</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r" data-i18n="fmRequiresAny">keysecondary + AND ANY (0)</div>
+          <div class="fm-l">filters.requiresAll</div>
+          <div class="fm-a">→</div>
+          <div class="fm-r" data-i18n="fmRequiresAll">keysecondary + AND ALL (1)</div>
+          <div class="fm-h" data-i18n="fmUniversal">ST ↔ JAI JSON (universal)</div>
+          <div class="fm-l">key / disable / delay</div>
+          <div class="fm-a">⇄</div>
+          <div class="fm-r" data-i18n="fmUniversalVal">keyword(s) / enabled / minMessages</div>
+          <div class="fm-h" data-i18n="fmPositionsHead">Positions</div>
+          <div class="fm-l">0</div>
+          <div class="fm-a">=</div>
+          <div class="fm-r" data-i18n="fmPos0">↑Char</div>
+          <div class="fm-l">1</div>
+          <div class="fm-a">=</div>
+          <div class="fm-r" data-i18n="fmPos1">↓Char</div>
+          <div class="fm-l">2</div>
+          <div class="fm-a">=</div>
+          <div class="fm-r" data-i18n="fmPos2">↑Ex Msgs</div>
+          <div class="fm-l">3</div>
+          <div class="fm-a">=</div>
+          <div class="fm-r" data-i18n="fmPos3">↓Ex Msgs</div>
+          <div class="fm-l">4</div>
+          <div class="fm-a">=</div>
+          <div class="fm-r" data-i18n="fmPos4">↑AN</div>
+          <div class="fm-l">5</div>
+          <div class="fm-a">=</div>
+          <div class="fm-r" data-i18n="fmPos5">↓AN</div>
+          <div class="fm-l">6</div>
+          <div class="fm-a">=</div>
+          <div class="fm-r" data-i18n="fmPos6">@ Depth (System/User/Asst + depth number)</div>
+          <div class="fm-l">7</div>
+          <div class="fm-a">=</div>
+          <div class="fm-r" data-i18n="fmPos7">Outlet (needs {{outlet::name}} in card)</div>
+        </div>
+      </details>
+
+      <div class="divider" data-i18n="resultsDivider">Results</div>
+
+      <div id="resultsSection">
+        <div class="result-meta">
+          <div class="result-stat"><span data-i18n="rCountLabel">Source entries:</span> <span id="rCount">—</span></div>
+          <div class="result-stat"><span data-i18n="rSTLabel">ST entries out:</span> <span id="rST">—</span></div>
+          <div class="result-stat"><span data-i18n="rSrcLabel">Format:</span> <span id="rSrc">—</span></div>
+          <div class="result-stat">→ <span id="rTgt">—</span></div>
+        </div>
+
+        <div id="previewNote" class="advanced-only">
+          <span data-i18n="previewNote1">* Table is showing a live preview. Adjust categories or settings above and click</span>
+          <strong data-i18n="convertBtnPlain">Convert ⟶</strong>
+          <span data-i18n="previewNote2">to generate your JSON.</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th data-i18n="thNum">#</th>
+                <th data-i18n="thType">Type</th>
+                <th data-i18n="thName">Name</th>
+                <th data-i18n="thKeywords">Keywords</th>
+                <th data-i18n="thSecondary">Secondary</th>
+                <th data-i18n="thPos">Pos</th>
+                <th data-i18n="thOrder">Order</th>
+                <th data-i18n="thDelay">Delay</th>
+              </tr>
+            </thead>
+            <tbody id="tBody"></tbody>
+          </table>
+        </div>
+
+        <div id="exportSection">
+          <div class="out-head advanced-only">
+            <div class="section-label" style="margin: 0; flex: 1" data-i18n="outputJsonLabel">Output JSON</div>
+            <button class="copy-btn" id="copyBtn" data-i18n="copyBtn">copy</button>
+          </div>
+          <textarea id="outputJson" readonly spellcheck="false" class="advanced-only"></textarea>
+          <div class="btn-row" style="margin-top: 12px">
+            <button class="btn btn-primary" id="downloadBtn" data-i18n="downloadBtn">Download JSON</button>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p data-i18n="footerLine1">All processing is local — nothing leaves your browser.</p>
+        <p style="margin-top: 5px">
+          <a href="https://docs.sillytavern.app/usage/core-concepts/worldinfo/" target="_blank" data-i18n="footerStDocs">ST Docs</a>
+          &nbsp;·&nbsp;
+          <a href="https://help.janitorai.com/en/category/scripts-1qzakwc/" target="_blank" data-i18n="footerJaiScripts">JAI Scripts</a>
+        </p>
+      </footer>
+    </div>
+
+    <!-- Modal -->
+    <div id="previewModal" class="modal">
+      <div class="modal-box">
+        <div class="modal-head">
+          <span id="pmTitle" data-i18n="pmTitle">Entry Preview</span>
+          <button class="modal-close" id="pmClose" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body" id="pmBody"></div>
+      </div>
+    </div>
+
+    <script src="lang-en.js"></script>
+    <script src="lang-ru.js"></script>
+    <script src="script.js"></script>
+  </body>
 </html>
