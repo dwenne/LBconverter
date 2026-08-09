@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lorebook Converter v7.4</title>
+    <!-- build: v7.4 — internal tracking only, not shown in the UI -->
+    <title>Lorebook Converter</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -15,12 +16,16 @@
   <body>
     <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
     <button class="lang-toggle" id="langToggle">RU</button>
+    <div class="card-editor-toggle" id="cardEditorToggle">
+      <a href="#" id="https://dwenne.github.io/CharacterCardEditor/" target="_blank" rel="noopener" data-i18n="cardEditorLabel" data-i18n-title="cardEditorTitle" title="Create an ST character card">Card Editor</a>
+      <span class="ce-sep">·</span>
+      <a href="#" id="https://drevaine.neocities.org/cardeditor" class="ce-mirror" target="_blank" rel="noopener" data-i18n="cardEditorMirrorLabel" data-i18n-title="cardEditorMirrorTitle" title="Backup link if the main one is down">mirror</a>
+    </div>
     <div class="page">
       <header>
         <div class="rune-line" data-i18n="runeLine">Tome Alchemy</div>
         <h1>
           <span data-i18n="title">Lorebook Converter</span>
-          <span class="v-badge">v7.4</span>
         </h1>
         <p class="subtitle" data-i18n="subtitle">
           SillyTavern World Info &nbsp;⇄&nbsp; JanitorAI Lorebook &amp; Scripts

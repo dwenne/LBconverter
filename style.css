@@ -48,6 +48,19 @@ body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-i
 .theme-toggle { top: 16px; right: 20px; display: flex; align-items: center; gap: 6px; }
 .lang-toggle { top: 16px; right: 130px; }
 .theme-toggle:hover, .lang-toggle:hover { border-color: var(--gold-dim); color: var(--text); }
+.card-editor-toggle {
+  position: fixed; z-index: 100; top: 16px; right: 218px;
+  display: flex; align-items: center; gap: 5px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 5px 12px;
+  font-family: "JetBrains Mono", monospace; font-size: 0.7rem;
+  opacity: 0.55; transition: opacity 0.2s, border-color 0.2s;
+}
+.card-editor-toggle:hover { opacity: 1; border-color: var(--gold-dim); }
+.card-editor-toggle a { color: var(--text-dim); text-decoration: none; white-space: nowrap; }
+.card-editor-toggle a:hover { color: var(--text); }
+.card-editor-toggle .ce-sep { color: var(--text-muted); }
+.card-editor-toggle .ce-mirror { font-size: 0.62rem; }
 .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
 header { text-align: center; margin-bottom: 44px; }
 .rune-line {
@@ -81,11 +94,6 @@ h1 {
   font-style: italic; max-width: 480px; margin-left: auto; margin-right: auto;
 }
 body.mode-simple .advanced-only { display: none !important; }
-.v-badge {
-  display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 0.65rem;
-  color: var(--gold-dim); border: 1px solid var(--gold-dim); border-radius: 2px;
-  padding: 1px 6px; margin-left: 8px; vertical-align: middle;
-}
 .section-label {
   font-family: "Cinzel", serif; font-size: 0.73rem; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--gold-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
@@ -276,6 +284,9 @@ footer a:hover { color: var(--gold2); }
   .page { padding: 52px 14px 60px; }
   .theme-toggle { top: 8px; right: 10px; padding: 4px 9px; font-size: 0.62rem; }
   .lang-toggle { top: 8px; right: 88px; padding: 4px 9px; font-size: 0.62rem; }
+  .card-editor-toggle { top: 8px; left: 10px; right: auto; padding: 4px 8px; font-size: 0.6rem; }
+  .card-editor-toggle .ce-mirror { display: none; }
+  .card-editor-toggle .ce-sep { display: none; }
   h1 { font-size: 1.4rem; }
   .subtitle { font-size: 0.88rem; }
   .rune-line { display: none; }
