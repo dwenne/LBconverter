@@ -21,7 +21,6 @@ A vibe-coded, browser-based converter for SillyTavern and JanitorAI lorebooks. F
 - Use the hosted version. Mobile-friendly, nothing to install:
   - [GitHub Pages](https://dwenne.github.io/LBconverter)
   - [Neocities](https://drevaine.neocities.org/lbconverter)
-Drop a lorebook file (or paste its contents) in, pick Simple or Advanced mode, hit Convert, download the result.
  
 ## Related project
  
