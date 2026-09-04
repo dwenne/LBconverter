@@ -29,6 +29,7 @@ window.WARN_I18N.en = {
   dynLoreGates: (n) => "<strong>" + n + " entr" + (n === 1 ? "y" : "ies") + "</strong> used gates ST can't express (tag-gates, emotion detection, maxMessages, notAll, or prev.* targeting) — those conditions were dropped; keyword/priority logic still applies.",
   dynLoreNameBlock: (n) => "<strong>" + n + " nameBlock entr" + (n === 1 ? "y" : "ies") + "</strong> mapped to ST's Character Filter (exclude).",
   dynLoreRelationships: (n) => "<strong>" + n + " relationship injection" + (n === 1 ? "" : "s") + "</strong> converted to entries requiring both characters' names (AND ALL) — the original requireTags condition couldn't be preserved.",
+  badKeywords: (n, d) => "<strong>" + n + " " + (n === 1 ? "entry" : "entries") + "</strong> had a keyword field that looked like pasted content, not trigger words (" + d + " item" + (d === 1 ? "" : "s") + ", too long or containing newlines) — moved into the entry's content and the keyword field cleared for you to fill in.",
   scriptRepaired: (s) => {
     const parts = [];
     if (s.unclosedStrings) parts.push(s.unclosedStrings + " unclosed string" + (s.unclosedStrings === 1 ? "" : "s"));
@@ -36,6 +37,21 @@ window.WARN_I18N.en = {
     if (s.prematureCloses) parts.push(s.prematureCloses + " array" + (s.prematureCloses === 1 ? "" : "s") + " that got closed early, orphaning entries after it");
     return "<strong>Auto-repaired " + parts.length + " syntax issue" + (parts.length === 1 ? "" : "s") + "</strong> in your script so it could still parse: " + parts.join(", ") + ". Double-check the affected entries came through correctly.";
   }
+};
+
+window.FIX_I18N = window.FIX_I18N || {};
+window.FIX_I18N.en = {
+  fixTitle: "Fix Entry",
+  fixNote: "This entry's keyword field looked like pasted content, not trigger words — it's been moved into <strong>Content</strong> below and the <strong>Keywords</strong> field cleared. Type real trigger words here.",
+  fixNameLabel: "Name",
+  fixKeywordsLabel: "Keywords (comma-separated)",
+  fixKeywordsPh: "e.g. Alice, Alice Smith, Wonderland",
+  fixContentLabel: "Content",
+  fixProgress: (idx, total) => total > 1 ? "Entry " + idx + " of " + total : "",
+  fixSaveNext: "Save & Next \u2192",
+  fixSaveClose: "Save",
+  fixSkip: "Skip",
+  fixHint: "Tap to fix keywords",
 };
 
 window.BADGE_I18N = window.BADGE_I18N || {};

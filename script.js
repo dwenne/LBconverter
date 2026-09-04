@@ -176,6 +176,30 @@ function sanitizeQuotes(code) {
 }
 
 let lastScriptRepairStats = null;
+
+// --- Keyword sanitization ---
+// If a keyword field is unnaturally big (any item too long or containing a
+// newline), the whole field is treated as corrupted — not item by item. The
+// entire thing is moved into the entry's content (nothing discarded), `key`
+// is left empty, and the entry is flagged so the fix-it popup lets the user
+// type real trigger words in by hand.
+let lastBadKeyStats = null;
+const KEY_MAX_LEN = 80;
+function isBadKeyword(s) {
+  if (typeof s !== "string") return true;
+  if (s.includes("\n")) return true;
+  if (s.length > KEY_MAX_LEN) return true;
+  return false;
+}
+function sanitizeKeyList(arr) {
+  if (!Array.isArray(arr) || !arr.length) return { keys: arr, movedText: "" };
+  if (!arr.some(isBadKeyword)) return { keys: arr, movedText: "" };
+  if (!lastBadKeyStats) lastBadKeyStats = { entries: 0, dropped: 0 };
+  lastBadKeyStats.entries++;
+  lastBadKeyStats.dropped += arr.length;
+  return { keys: [], movedText: arr.join(", ") };
+}
+
 function fixUnclosedLineStrings(code) {
   const lines = code.split("\n");
   let fixed = 0;
@@ -851,11 +875,16 @@ function jaiToSt(e, uid) {
   let k = e.keys || e.keywords || e.keyword || e.key || [];
   if (typeof k === "string") k = k.split(",").map((s) => s.trim()).filter(Boolean);
   else if (!Array.isArray(k)) k = [k];
+  const sanitized = sanitizeKeyList(k);
+  k = sanitized.keys;
   let ks = e.keysecondary || e.secondary_keys || [];
   if (typeof ks === "string") ks = ks.split(",").map((s) => s.trim()).filter(Boolean);
   else if (!Array.isArray(ks)) ks = [ks];
-  const st = makeSTEntry(uid, k, ks, e.selective ?? true, e.selectiveLogic ?? 0, label, e.content || "", "0", e.order ?? 100, e.minMessages ?? 0, "", 4);
+  let content = e.content || "";
+  if (sanitized.movedText) content = sanitized.movedText + (content ? "\n\n" + content : "");
+  const st = makeSTEntry(uid, k, ks, e.selective ?? true, e.selectiveLogic ?? 0, label, content, "0", e.order ?? 100, e.minMessages ?? 0, "", 4);
   st._type = "jai";
+  st._flaggedKeys = !!sanitized.movedText;
   return { ...e, ...st };
 }
 
@@ -868,6 +897,7 @@ function buildWarnings(entries, fmt) {
     if (entries.filter((e) => e.sticky > 0).length) w.push(wt("stickyDropped"));
     if (entries.filter((e) => e.vectorized).length) w.push(wt("vectorizedDropped"));
   } else if (fmt === "jai") {
+    if (lastBadKeyStats && lastBadKeyStats.entries) w.push(wt("badKeywords")(lastBadKeyStats.entries, lastBadKeyStats.dropped));
     w.push(wt("jaiPosSet"));
   } else if (fmt === "jai_script" || fmt === "if_chain" || fmt === "dynamic_lore") {
     if (lastScriptRepairStats && (lastScriptRepairStats.unclosedStrings || lastScriptRepairStats.missingCommas || lastScriptRepairStats.prematureCloses)) {
@@ -899,11 +929,96 @@ const modal = document.getElementById("previewModal");
 const mTitle = document.getElementById("pmTitle");
 const mBody = document.getElementById("pmBody");
 const mClose = document.getElementById("pmClose");
+function closeModal() {
+  modal.classList.remove("visible");
+  mBody.classList.remove("editing");
+  fixQueue = [];
+}
 function showPreview(title, content) {
+  mBody.classList.remove("editing");
   mTitle.textContent = title; mBody.textContent = content; modal.classList.add("visible");
 }
-mClose.onclick = () => modal.classList.remove("visible");
-modal.onclick = (e) => { if (e.target === modal) modal.classList.remove("visible"); };
+mClose.onclick = closeModal;
+modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+// --- Fix-it modal: lets the user edit name / keywords / content for
+// entries where keyword sanitization stripped or auto-recovered keys. ---
+function ft(key) { return (FIX_I18N[LANG] || FIX_I18N.en)[key]; }
+let fixQueue = [], fixTotal = 0;
+function startFixQueue(uids) {
+  fixQueue = uids.slice();
+  fixTotal = fixQueue.length;
+  if (fixQueue.length) openNextFix();
+}
+function openNextFix() {
+  if (!fixQueue.length) { modal.classList.remove("visible"); mBody.classList.remove("editing"); return; }
+  const uid = fixQueue.shift();
+  openEntryEditor(uid, fixTotal - fixQueue.length, fixTotal);
+}
+function openEntryEditor(uid, idx, total) {
+  const e = currentSTEntries[uid];
+  if (!e) { openNextFix(); return; }
+  mBody.classList.add("editing");
+  mBody.innerHTML = "";
+
+  const note = document.createElement("div");
+  note.className = "edit-note";
+  note.innerHTML = ft("fixNote");
+  mBody.appendChild(note);
+
+  function field(labelText, inputEl) {
+    const wrap = document.createElement("div");
+    wrap.className = "edit-field";
+    const lbl = document.createElement("label");
+    lbl.className = "name-label"; lbl.textContent = labelText;
+    wrap.appendChild(lbl); wrap.appendChild(inputEl);
+    return wrap;
+  }
+
+  const nameInp = document.createElement("input");
+  nameInp.className = "name-input"; nameInp.type = "text"; nameInp.value = e.comment || "";
+  mBody.appendChild(field(ft("fixNameLabel"), nameInp));
+
+  const kwInp = document.createElement("input");
+  kwInp.className = "name-input"; kwInp.type = "text";
+  kwInp.value = (e.key || []).join(", ");
+  kwInp.placeholder = ft("fixKeywordsPh");
+  mBody.appendChild(field(ft("fixKeywordsLabel"), kwInp));
+
+  const contentTa = document.createElement("textarea");
+  contentTa.style.minHeight = "220px";
+  contentTa.value = e.content || "";
+  mBody.appendChild(field(ft("fixContentLabel"), contentTa));
+
+  const countEl = document.createElement("div");
+  countEl.className = "edit-count";
+  countEl.textContent = ft("fixProgress")(idx, total);
+  mBody.appendChild(countEl);
+
+  const btnRow = document.createElement("div");
+  btnRow.className = "btn-row";
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button"; saveBtn.className = "btn btn-primary";
+  saveBtn.textContent = fixQueue.length ? ft("fixSaveNext") : ft("fixSaveClose");
+  saveBtn.onclick = () => {
+    e.comment = nameInp.value.trim();
+    e.key = kwInp.value.split(",").map((s) => s.trim()).filter(Boolean);
+    e.content = contentTa.value;
+    delete e._flaggedKeys;
+    rebuildOutput();
+    renderTable(currentSTEntries);
+    openNextFix();
+  };
+  const skipBtn = document.createElement("button");
+  skipBtn.type = "button"; skipBtn.className = "btn btn-secondary";
+  skipBtn.textContent = ft("fixSkip");
+  skipBtn.onclick = () => openNextFix();
+  btnRow.appendChild(saveBtn); btnRow.appendChild(skipBtn);
+  mBody.appendChild(btnRow);
+
+  mTitle.textContent = ft("fixTitle");
+  modal.classList.add("visible");
+}
 
 function tagListInner(arr, cls) {
   if (!arr || !arr.length) return '<span style="color:var(--text-muted);font-size:.7rem">—</span>';
@@ -939,8 +1054,8 @@ function renderTable(stEntries) {
     else if (e._type === "merged") tb = '<span class="type-badge tb-merged">merged</span>';
 
     const tr = document.createElement("tr");
-    tr.className = "click-row";
-    tr.onclick = () => showPreview(currentSTEntries[uid].comment || "(unnamed)", e.content);
+    tr.className = "click-row" + (e._flaggedKeys ? " flagged-row" : "");
+    tr.onclick = () => e._flaggedKeys ? openEntryEditor(uid, 1, 1) : showPreview(currentSTEntries[uid].comment || "(unnamed)", e.content);
     tr.appendChild(mkTd(i, "mono"));
     tr.appendChild(mkTd(tb));
     const nameTd = document.createElement("td");
@@ -951,10 +1066,13 @@ function renderTable(stEntries) {
     nameInp.addEventListener("click", (ev) => ev.stopPropagation());
     nameInp.addEventListener("change", () => { currentSTEntries[uid].comment = nameInp.value; rebuildOutput(); });
     const hint = document.createElement("span");
-    hint.className = "tap-hint"; hint.textContent = "Tap row to preview";
+    hint.className = "tap-hint";
+    hint.textContent = e._flaggedKeys ? ft("fixHint") : "Tap row to preview";
     nameTd.appendChild(nameInp); nameTd.appendChild(hint); tr.appendChild(nameTd);
 
-    const kwTd = document.createElement("td"); kwTd.innerHTML = tagListInner(e.key, "kw"); tr.appendChild(kwTd);
+    const kwTd = document.createElement("td");
+    kwTd.innerHTML = (e._flaggedKeys ? '<span class="flag-badge" title="' + escHtml(ft("fixHint")) + '">⚠</span>' : "") + tagListInner(e.key, "kw");
+    tr.appendChild(kwTd);
     const secTd = document.createElement("td"); secTd.innerHTML = tagListInner(e.keysecondary, "sec"); tr.appendChild(secTd);
     tr.appendChild(mkTd(posBadge(e.position, e.role)));
     tr.appendChild(mkTd(e.order, "mono"));
@@ -1006,6 +1124,7 @@ function buildExportJson(entriesObj) {
 
 function doConvert(text) {
   lastScriptRepairStats = null;
+  lastBadKeyStats = null;
   const det = detectFormat(text);
   if (!det) { badge("error", "cannotDetect"); return; }
   updatePills(det.type);
@@ -1064,6 +1183,8 @@ function doConvert(text) {
     badge("ok", "detectedJai", raw.length);
     populate(raw.length, Object.keys(obj.entries).length, "JAI Lorebook JSON", "ST World Info", false);
     renderTable(obj.entries);
+    const flagged = Object.keys(obj.entries).filter((uid) => obj.entries[uid]._flaggedKeys);
+    if (flagged.length) startFixQueue(flagged);
     return;
   }
 }

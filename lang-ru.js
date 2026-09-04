@@ -37,6 +37,7 @@ window.WARN_I18N.ru = {
   dynLoreGates: (n) => "<strong>" + n + " " + ruPlural(n, "запись", "записи", "записей") + "</strong> использовали условия, которые ST не может выразить (теги, эмоции, maxMessages, notAll или таргетинг prev.*) — эти условия были отброшены; логика ключевых слов и приоритета сохраняется.",
   dynLoreNameBlock: (n) => "<strong>" + n + " " + ruPlural(n, "запись nameBlock", "записи nameBlock", "записей nameBlock") + "</strong> сопоставлены с фильтром персонажа ST (исключение).",
   dynLoreRelationships: (n) => "<strong>" + n + " " + ruPlural(n, "триггер отношений", "триггера отношений", "триггеров отношений") + "</strong> преобразованы в записи, требующие оба имени персонажей (AND ALL) — исходное условие requireTags сохранить не удалось.",
+  badKeywords: (n, d) => "<strong>" + n + " " + ruPlural(n, "запись", "записи", "записей") + "</strong> содержали поле ключевых слов, похожее на вставленный текст, а не на триггерные слова (" + d + " " + ruPlural(d, "элемент", "элемента", "элементов") + ", слишком длинные или с переносами строки) — перенесено в поле содержимого записи, а поле ключевых слов очищено для ручного заполнения.",
   scriptRepaired: (s) => {
     const parts = [];
     if (s.unclosedStrings) parts.push(s.unclosedStrings + " " + ruPlural(s.unclosedStrings, "незакрытая строка", "незакрытые строки", "незакрытых строк"));
@@ -44,6 +45,21 @@ window.WARN_I18N.ru = {
     if (s.prematureCloses) parts.push(s.prematureCloses + " " + ruPlural(s.prematureCloses, "преждевременно закрытый массив", "преждевременно закрытых массива", "преждевременно закрытых массивов") + ", из-за чего часть записей осталась «снаружи»");
     return "<strong>Автоматически исправлено " + parts.length + " " + ruPlural(parts.length, "синтаксическая ошибка", "синтаксические ошибки", "синтаксических ошибок") + "</strong> в скрипте, чтобы его вообще можно было разобрать: " + parts.join(", ") + ". Проверьте, что затронутые записи собрались верно.";
   }
+};
+
+window.FIX_I18N = window.FIX_I18N || {};
+window.FIX_I18N.ru = {
+  fixTitle: "Исправить запись",
+  fixNote: "Поле ключевых слов этой записи было похоже на вставленный текст, а не на триггерные слова — оно перенесено в поле <strong>Содержимое</strong> ниже, а поле <strong>Ключевые слова</strong> очищено. Впишите здесь реальные триггерные слова.",
+  fixNameLabel: "Название",
+  fixKeywordsLabel: "Ключевые слова (через запятую)",
+  fixKeywordsPh: "например: Alice, Alice Smith, Wonderland",
+  fixContentLabel: "Содержимое",
+  fixProgress: (idx, total) => total > 1 ? "Запись " + idx + " из " + total : "",
+  fixSaveNext: "Сохранить и далее \u2192",
+  fixSaveClose: "Сохранить",
+  fixSkip: "Пропустить",
+  fixHint: "Нажмите, чтобы исправить ключевые слова",
 };
 
 window.BADGE_I18N = window.BADGE_I18N || {};

@@ -278,6 +278,13 @@ footer a:hover { color: var(--gold2); }
 .modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 1.8rem; cursor: pointer; line-height: 1; transition: color 0.15s; }
 .modal-close:hover { color: var(--red); }
 .modal-body { padding: 18px; overflow-y: auto; font-family: "JetBrains Mono", monospace; font-size: 0.78rem; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+.modal-body.editing { white-space: normal; font-family: "Crimson Pro", serif; }
+.edit-note { font-size: 0.82rem; color: var(--amber); background: var(--warn-bg); border-left: 2px solid var(--amber); padding: 8px 10px; border-radius: 0 3px 3px 0; margin-bottom: 16px; font-style: italic; line-height: 1.5; }
+.edit-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.edit-field textarea { min-height: 220px; font-family: "JetBrains Mono", monospace; }
+.edit-count { font-size: 0.7rem; color: var(--text-muted); font-family: "JetBrains Mono", monospace; margin-bottom: 10px; }
+.flagged-row { box-shadow: inset 3px 0 0 var(--amber); }
+.flag-badge { color: var(--amber); font-size: 0.75rem; margin-right: 4px; cursor: help; }
 
 /* Mobile */
 @media (max-width: 640px) {
