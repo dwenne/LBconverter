@@ -357,6 +357,17 @@ function parseIfChain(code) {
   const entries = [];
   const msgVar = detectMsgVar(code);
   const kwConsts = extractKeywordConstants(code);
+  // name -> string value for `const x = `...`` / "..." / '...' declarations,
+  // so `context.character.scenario += x;` can be resolved.
+  const strConsts = {};
+  {
+    const sRe = /\b(?:const|let|var)\s+(\w+)\s*=\s*(?=[`'"])/g;
+    let sm0;
+    while ((sm0 = sRe.exec(code)) !== null) {
+      const r = extractStrEnd(code, sRe.lastIndex);
+      if (r) { strConsts[sm0[1]] = r.value; sRe.lastIndex = r.end; }
+    }
+  }
 
   function getBlock(src, braceIdx) {
     let depth = 0, i = braceIdx;
@@ -396,8 +407,20 @@ function parseIfChain(code) {
 
   function getKws(cond) {
     const msgVarEsc = msgVar.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(msgVarEsc + "\\.includes\\s*\\(([^)]*)\\)", "g");
     const kws = [];
+    // Pattern: someKeywords.some(k => lastMessage.includes(k))  (also function form, or an inline [..] array)
+    const someRe = new RegExp("(\\w+|\\[[^\\]]*\\])\\s*\\.some\\s*\\(\\s*(?:function\\s*)?\\(?\\s*(\\w+)\\s*\\)?\\s*(?:=>|\\{\\s*return)\\s*" + msgVarEsc + "\\.includes\\s*\\(\\s*\\2\\s*\\)", "g");
+    let sm;
+    while ((sm = someRe.exec(cond)) !== null) {
+      const srcArr = sm[1];
+      if (srcArr[0] === "[") {
+        const strRe = /'([^'\\]*(?:\\.[^'\\]*)*)'|"([^"\\]*(?:\\.[^"\\]*)*)"/g;
+        let x;
+        while ((x = strRe.exec(srcArr)) !== null) kws.push(x[1] !== undefined ? x[1] : x[2]);
+      } else if (kwConsts[srcArr]) kws.push(...kwConsts[srcArr]);
+    }
+    cond = cond.replace(someRe, " ");
+    const re = new RegExp(msgVarEsc + "\\.includes\\s*\\(([^)]*)\\)", "g");
     let m;
     while ((m = re.exec(cond)) !== null) {
       const parts = m[1].split("||").map((s) => s.trim());
@@ -420,10 +443,24 @@ function parseIfChain(code) {
   }
 
   function getContent(body) {
-    const pi = body.indexOf("context.character.personality +=");
-    const si = body.indexOf("context.character.scenario +=");
-    let p = pi !== -1 ? extractStr(body, pi + 32) : "";
-    let s = si !== -1 ? extractStr(body, si + 29) : "";
+    function readValue(src, from) {
+      let i = from;
+      while (i < src.length && /\s/.test(src[i])) i++;
+      const c = src[i];
+      if (c === "'" || c === '"' || c === "`") return extractStr(src, i);
+      const idm = /^[A-Za-z_$][\w$]*/.exec(src.slice(i));
+      if (idm && strConsts[idm[0]] !== undefined) return strConsts[idm[0]];
+      return extractStr(src, from);
+    }
+    function collect(field) {
+      const re = new RegExp("context\\.character\\." + field + "\\s*\\+=", "g");
+      const parts = [];
+      let m;
+      while ((m = re.exec(body)) !== null) { const v = readValue(body, re.lastIndex); if (v) parts.push(v); }
+      return parts.join("");
+    }
+    let p = collect("personality");
+    let s = collect("scenario");
     if (!p) {
       const pr = body.indexOf("context.character.personality.replace(");
       if (pr !== -1) p = extractReplaceArg(body, pr);
@@ -903,7 +940,6 @@ function buildWarnings(entries, fmt) {
     if (lastScriptRepairStats && (lastScriptRepairStats.unclosedStrings || lastScriptRepairStats.missingCommas || lastScriptRepairStats.prematureCloses)) {
       w.push(wt("scriptRepaired")(lastScriptRepairStats));
     }
-    w.push(wt("scriptSecurity"));
     const isMerged = document.getElementById("mergePairsCheck").checked;
     if (isMerged) w.push(wt("scriptMerged")); else w.push(wt("scriptSplit"));
     w.push(wt("outletReminder"));

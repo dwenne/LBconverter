@@ -23,7 +23,6 @@ window.WARN_I18N.en = {
   outletReminder: "For any entries mapped to <strong>7 / Outlet</strong>, make sure to add <code>{{outlet::name}}</code> to your character card.",
   filtersUsed: (n) => "<strong>" + n + " entries</strong> use filters — mapped to ST secondary keys.",
   ifChainDup: "If-chain scripts may have duplicate keyword sets. They have been grouped under the <strong>If-Chain</strong> category.",
-  scriptSecurity: "<strong>Security Note:</strong> Scripts are evaluated locally in your browser. Only import scripts from trusted sources.",
   dynLoreInlined: (n) => "<strong>" + n + " trigger-only entr" + (n === 1 ? "y" : "ies") + "</strong> (tag-based, no keywords) " + (n === 1 ? "was" : "were") + " merged into whichever entry emits its tag — ST has no cross-entry tag system, so if two entries share a trigger tag, that content may now appear twice in the same turn instead of once.",
   dynLoreShifts: (n) => "<strong>" + n + " Shift" + (n === 1 ? "" : "s") + "</strong> became separate ST entries gated on the parent's keywords via AND ALL — an approximation of \"only after the parent fires.\"",
   dynLoreGates: (n) => "<strong>" + n + " entr" + (n === 1 ? "y" : "ies") + "</strong> used gates ST can't express (tag-gates, emotion detection, maxMessages, notAll, or prev.* targeting) — those conditions were dropped; keyword/priority logic still applies.",
