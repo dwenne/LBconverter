@@ -29,6 +29,7 @@ window.WARN_I18N.en = {
   dynLoreNameBlock: (n) => "<strong>" + n + " nameBlock entr" + (n === 1 ? "y" : "ies") + "</strong> mapped to ST's Character Filter (exclude).",
   dynLoreRelationships: (n) => "<strong>" + n + " relationship injection" + (n === 1 ? "" : "s") + "</strong> converted to entries requiring both characters' names (AND ALL) — the original requireTags condition couldn't be preserved.",
   badKeywords: (n, d) => "<strong>" + n + " " + (n === 1 ? "entry" : "entries") + "</strong> had a keyword field that looked like pasted content, not trigger words (" + d + " item" + (d === 1 ? "" : "s") + ", too long or containing newlines) — moved into the entry's content and the keyword field cleared for you to fill in.",
+  keysSplit: (n, k) => "<strong>" + n + " " + (n === 1 ? "entry" : "entries") + "</strong> had keywords packed into a single item (like <code>/a/b/c/</code> or <code>a, b, c</code>) — split into proper separate keywords (" + k + " total).",
   scriptRepaired: (s) => {
     const parts = [];
     if (s.unclosedStrings) parts.push(s.unclosedStrings + " unclosed string" + (s.unclosedStrings === 1 ? "" : "s"));

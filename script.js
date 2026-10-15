@@ -191,9 +191,45 @@ function isBadKeyword(s) {
   if (s.length > KEY_MAX_LEN) return true;
   return false;
 }
+// Turns messy keyword lists into proper ones:
+//  - "/a/b/c/"        (slash-delimited, leading slash)  -> a, b, c
+//  - "a, b, c"        (comma-joined into one item)      -> a, b, c
+// Trims, drops empties and removes duplicates (case-insensitive). Items with newlines are left
+// alone so the "pasted content" check below can still catch them.
+let lastKeySplitStats = null;
+function normalizeKeyList(arr) {
+  if (!Array.isArray(arr)) return arr;
+  const out = [];
+  const seen = new Set();
+  let split = false;
+  const add = (t) => {
+    const low = typeof t === "string" ? t.toLowerCase() : t;
+    if (typeof t === "string" && seen.has(low)) return;
+    if (typeof t === "string") seen.add(low);
+    out.push(t);
+  };
+  for (const k of arr) {
+    if (typeof k !== "string" || k.includes("\n")) { add(k); continue; }
+    const t = k.trim();
+    let parts = null;
+    if (t.startsWith("/") && t.indexOf("/", 1) !== -1) parts = t.split("/");
+    else if (t.includes(",")) parts = t.split(",");
+    if (parts) {
+      split = true;
+      for (const piece of parts) { const x = piece.trim(); if (x) add(x); }
+    } else if (t) add(t);
+  }
+  if (split) {
+    if (!lastKeySplitStats) lastKeySplitStats = { entries: 0, keys: 0 };
+    lastKeySplitStats.entries++;
+    lastKeySplitStats.keys += out.length;
+  }
+  return out;
+}
 function sanitizeKeyList(arr) {
   if (!Array.isArray(arr) || !arr.length) return { keys: arr, movedText: "" };
-  if (!arr.some(isBadKeyword)) return { keys: arr, movedText: "" };
+  const expanded = normalizeKeyList(arr);
+  if (!expanded.some(isBadKeyword)) return { keys: expanded, movedText: "" };
   if (!lastBadKeyStats) lastBadKeyStats = { entries: 0, dropped: 0 };
   lastBadKeyStats.entries++;
   lastBadKeyStats.dropped += arr.length;
@@ -895,7 +931,7 @@ function scriptToST(entries, catMap, outlet, opts) {
 }
 
 function stToJai(e, uid) {
-  const k = Array.isArray(e.key) ? e.key : e.key ? [e.key] : [];
+  const k = normalizeKeyList(Array.isArray(e.key) ? e.key : e.key ? [e.key] : []);
   const jai = {
     id: uid, keyword: k, keys: k, keysecondary: Array.isArray(e.keysecondary) ? e.keysecondary : [],
     comment: e.comment || "", content: e.content || "", enabled: !e.disable, constant: !!e.constant,
@@ -922,12 +958,22 @@ function jaiToSt(e, uid) {
   const st = makeSTEntry(uid, k, ks, e.selective ?? true, e.selectiveLogic ?? 0, label, content, "0", e.order ?? 100, e.minMessages ?? 0, "", 4);
   st._type = "jai";
   st._flaggedKeys = !!sanitized.movedText;
-  return { ...e, ...st };
+  const out = { ...e, ...st };
+  // keep the editor's raw-text mirrors of the key fields in sync with the cleaned keys
+  if (!sanitized.movedText) {
+    if ("keysRaw" in out) out.keysRaw = k.join(", ");
+    if ("keywordsRaw" in out) out.keywordsRaw = k.join(", ");
+  } else {
+    if ("keysRaw" in out) out.keysRaw = "";
+    if ("keywordsRaw" in out) out.keywordsRaw = "";
+  }
+  return out;
 }
 
 function wt(key) { return (WARN_I18N[LANG] || WARN_I18N.en)[key]; }
 function buildWarnings(entries, fmt) {
   const w = [];
+  if (lastKeySplitStats && lastKeySplitStats.entries) w.push(wt("keysSplit")(lastKeySplitStats.entries, lastKeySplitStats.keys));
   if (fmt === "st") {
     const pos = entries.filter((e) => e.position !== undefined && e.position !== 4);
     if (pos.length) w.push(wt("nonDefaultPos")(pos.length));
@@ -1161,6 +1207,7 @@ function buildExportJson(entriesObj) {
 function doConvert(text) {
   lastScriptRepairStats = null;
   lastBadKeyStats = null;
+  lastKeySplitStats = null;
   const det = detectFormat(text);
   if (!det) { badge("error", "cannotDetect"); return; }
   updatePills(det.type);
